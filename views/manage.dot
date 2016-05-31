@@ -1,1 +1,63 @@
-hi!
+<script src="js/manage.js"></script>
+<div class="container theme-showcase" role="main" style="margin-top:70px;">
+
+  <div id="alert_status" class="alert alert-success" role="alert">This is a status message</div>
+  <div class="col-md-12">
+    <!-- Overll Header -->
+    <div class="panel panel-primary">
+      <div class="panel-heading"><strong>Create new Object</strong></div>
+      <div class="panel-body">
+        <div class="row">
+
+          <div class="col-md-12">
+            <!-- Add Category Interface -->
+            <div class="jumbotron" id="addcategory">
+              <h3>Add new Category:</h3>
+              <p>Enter a name and press "Save" to add a new Category</p>
+              <input id="input_category" type="text" class="form-control" placeholder="Category name">
+              <br />
+              <button id="btn_cancelcategory" type="button" class="btn btn-default">Cancel</button>
+              <button id="btn_savecategory" type="button" class="btn btn-default">Save</button>
+            </div>
+
+            <!-- Category Dropdown -->
+            <div class="dropdown">
+              <button id="btn_selectcategory" class="btn btn-default dropdown-toggle" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Object Category <span class="caret"></span></button>
+              <button id="btn_addcategory" type="button" class="btn btn-default" aria-label="Links ausrichten"><span class="glyphicon glyphicon-plus" aria-hidden="true"></span></button>
+              <ul id="dropdown_selectcategory" class="dropdown-menu" aria-labelledby="dropdownMenu1">
+                {{~it.items :value:index}}
+                <li><a href="#" data-id="{{=value.id}}">{{=value.value}}</a></li>
+                {{~}}
+              </ul>
+            </div>
+
+            <br />
+            <div class="input-group">
+              <input id="input_objectname" type="text" class="form-control" placeholder="Objectname">
+            </div>
+
+            <br />
+            <div class="input-group">
+               <div class="input-group-btn">
+                 <button id="btn_commandtype" type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" value="0">Command Type <span class="caret"></span></button>
+                 <ul id="dropdown_commandtype" class="dropdown-menu">
+                   <li class="dropdown-header">Funksteckdosen</li>
+                   <li><a href="#" data-value="Brennenstuhl">Brennenstuhl</a></li>
+                   <li><a href="#" data-value="Intertechno">Intertechno</a></li>
+                   <li class="dropdown-header">Music</li>
+                   <li><a href="#" data-value="BOSE">BOSE</a></li>
+                   <li class="dropdown-header">Other</li>
+                   <li><a href="#" data-value="CMD">CMD</a></li>
+                 </ul>
+               </div><!-- /btn-group -->
+               <input id="input_command" type="text" class="form-control" aria-label="..." disabled>
+             </div><!-- /input-group -->
+
+            <br />
+            <button id="btn_createobject" type="button" class="btn btn-default">Create Object</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

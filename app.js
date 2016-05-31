@@ -1,6 +1,9 @@
-// Module dependencies
+// jshint esversion: 6
+// ---------------------------------
+// - Require & Variables Setup -
+// --------------------------------
 
-// - Webserver & Socket IO
+// - Webserver & Socket IO -
 var express = require('express'); // Web - Framework
 var doT = require('express-dot'); // Templating
 var compression = require('compression'); // gzip/deflate outgoing responses
@@ -8,55 +11,95 @@ var app = express();
 var server = require('http').Server(app); // Http Server
 var io = require('socket.io')(server); // IO Socket
 
-// - Shell Scripts
+// - Shell Scripts -
 var path = require('path');
 var sys = require('sys');
 var exec = require('child_process').exec;
 
-// - Database
+// - Database -
 var nano = require('nano')('https://demoehn:a11HQSM54!!@demoehn.cloudant.com'); // Connect to CouchDB
 var db = nano.use('homeautomation'); // Connect to Database
 
-// Define Variables
+// - Define Variables -
 var cmd = 'pilight-send -p'; //Command to send with "pilight" and -p for Protocol (Rest comes from DB)
 var files = __dirname + '/public/';
 
-// Listen for paths
+// Available Buttons
+var myGroups = Array();
+var myObjects = Array();
+var objectsScanned = false;
+
+
+// ------------------
+// - Server Setup -
+// ------------------
+
+// - Listen for paths -
 app.set('views', __dirname+'/views');
-app.set('view engine', 'dot');
+app.set('view engine', 'dot'); // Use dot Templating
 app.engine('dot', doT.__express); // Use dot Templating
 app.use(compression()); // Use compression
 app.use(express.static(__dirname + '/public')); // Use Express.static middleware to servce static files
 
-// Server functions
-app.get('/', function (req, res) {
-  db.view('show', 'groups', function(err, body) {
+// - Home route -
+app.get('/', homeRoute);
+app.get('/home', homeRoute);
+function homeRoute(req, res) {
+  myGroups = []; // Reset variables if loaded again
+  myObjects = [];
+  objectsScanned = false;
+
+  db.view('show', 'groups', function(err, groupBody) { // Read all Groups
     if (!err) {
-      var counts = body.rows.length;
-      body.rows.forEach(function(doc) {
-        db.view('show', 'btns', {key:doc.id}, function(err, pbody) {
-          if (!err) {
-              counts--;
-              doc.devices = pbody.rows;
-              if(counts <= 0) {
-                items = body.rows;
-                res.render('index', {items: items}); // Render and pass variables
+      db.view('show', 'btns', function(err, objectBody) { // Read all Objects
+        if (!err) {
+          groupBody.rows.forEach(function(groupDoc) { // For each Group
+            groupDoc.devices = Array(); // Store all objects here
+            objectBody.rows.forEach(function(objectDoc) { // For each Object
+              if(objectDoc.value.groupid == groupDoc.id) { // Does this object belong to the group?
+                groupDoc.devices.push(objectDoc);
               }
-          }
-        });
+              if(!objectsScanned) {
+                myObjects.push(objectDoc.value);
+              }
+            });
+            myGroups.push(groupDoc); // Save the group to an array
+            objectsScanned = true; // Only save the objects once (not for every group)
+          });
+
+          res.render('index', {items: myGroups}); // Render and pass variables
+        }
       });
     }
   });
+}
+
+// - Manage route -
+app.get('/manage', manageRoute);
+function manageRoute(req, res) {
+  db.view('show', 'groups', function(err, body) {
+    if (!err) {
+      items = body.rows;
+      res.render('manage', {items: items}); // Render and pass variables
+    }
+  });
+}
+
+// - Start Server -
+server.listen(3000, function() { // Create Server on 3000
+  console.log('listening on http://localhost:3000');
 });
 
-// Server functions
-app.get('/manage', function (req, res) {
-  res.render('manage', { }); // Render and pass variables
-});
 
-// Functions
-// - Send to Intertechno Device
-function sendToDev(devcmd, stat) {
+// ------------------------
+// - General Functions -
+// -----------------------
+
+// - Send to Intertechno Device -
+function sendToDev(obj, data) {
+  var devcmd = obj.code;
+  var stat = data.status;
+
   var send = "";
 
   send =  cmd+" "+devcmd;
@@ -73,11 +116,34 @@ function sendToDev(devcmd, stat) {
       console.log('exec error: ' + err);
     }else{
       console.log(stdout);
+      obj.status = stat;
+      io.sockets.emit('btnActionPressedStatus', obj); // Respond with JSON Object of btnData
     }
   });
 }
 
-// Socket.io Settings
+function sendToBose(obj, data) {
+  var devcmd = obj.code;
+  var stat = data.status;
+
+  exec(devcmd, function (err, stdout, stderr) { // Exceute command
+    if (err) {
+      console.log('exec error: ' + err);
+    }else{
+      console.log(stdout);
+    }
+  });
+
+  obj.status = stat;
+  io.sockets.emit('btnActionPressedStatus', obj); // Respond with JSON Object of btnData
+}
+
+
+// ------------------------
+// - Socket.io Settings -
+// ------------------------
+
+// - General Socket.io Connection -
 io.on('connection', function(socket){
   console.log('a user connected');
 
@@ -85,32 +151,48 @@ io.on('connection', function(socket){
     console.log('user disconnected');
   });
 
-  socket.on('btnPressed', function(data, callback) {
-    var btnData = JSON.parse(data); // Recieve Data from the button and parse JSON
+  socket.on('btnActionPressed', actionButtonPressed);
+  socket.on('btnCategorySave', createNewCategory);
+  socket.on('btnObjectSave', createNewObject);
+});
 
-    db.get(btnData.id, function(err, body, header) { // Check if exists and get _rev
+
+// - Socket Helper-Functions -
+
+  // -- Handle Button Press --
+  function actionButtonPressed(data, callback) {
+    var currentObject = myObjects.find(x=> x._id === data.id); // Find Object where _id equals data.id
+
+    if(typeof currentObject.commandtype === 'undefined') {
+      sendToDev(currentObject, data);
+    }else{
+      if(currentObject.commandtype == "BOSE") {
+        sendToBose(currentObject, data);
+      }
+    }
+  }
+
+  // -- Create a new Category --
+  function createNewCategory(data, callback) {
+    db.insert(data, function(err, body, header) { // Update button
       if (err) {
-        console.log('[db.header] ', err.message);
+        console.log('[db.insert] ', err.message);
       }else{
-        console.log('[db.header] ', body);
-        sendToDev(body.code, btnData.status); // Send Data to the device
-
-        db.insert(body, btnData.id, function(err, pbody, header) { // Update button
-          if (err) {
-            console.log('[db.insert] ', err.message);
-          }else{
-            console.log('you have inserted the data');
-            console.log(body);
-
-            io.sockets.emit('btnStatus', JSON.stringify(btnData)); // Respond with JSON Object of btnData
-          }
-        });
+        console.log('A new category was created: '+data.name);
+        io.sockets.emit('btnCategorySaveStatus', body); // Respond with JSON Object of btnData
       }
     });
-  });
-});
+  }
 
-// Start Server
-server.listen(3000, function() { // Create Server on 3000
-  console.log('listening on http://localhost:3000');
-});
+  // -- Create a new Object --
+  function createNewObject(data, callback) {
+    db.insert(data, function(err, body, header) { // Update button
+      if (err) {
+        console.log('[db.insert] ', err.message);
+      }else{
+        console.log('A new object was created: '+data.name);
+        io.sockets.emit('btnObjectSaveStatus', body); // Respond with JSON Object of btnData
+        console.log(body);
+      }
+    });
+  }
