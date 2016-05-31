@@ -1,0 +1,22 @@
+<div class="container theme-showcase" role="main" style="margin-top:70px;">
+  <div class="row">
+
+        <div class="col-md-12">
+          <div class="panel panel-primary">
+            <div class="panel-heading"><strong>Info</strong></div>
+            <div class="panel-body">
+              <div class="row">
+
+
+                <div class="col-xs-4">
+                  <p>Here will be way more info soon!</p>
+                </div>
+            
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+  </div>
+</div>

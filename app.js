@@ -41,8 +41,12 @@ app.engine('dot', doT.__express); // Use dot Templating
 app.use(compression()); // Use compression
 app.use(express.static(__dirname + '/public')); // Use Express.static middleware to servce static files
 
-// - Home route -
+// - Routes -
 app.get('/', homeRoute);
+app.get('/manage', manageRoute);
+app.get('/info', infoRoute);
+
+// - Home route -
 app.get('/home', homeRoute);
 function homeRoute(req, res) {
   myGroups = []; // Reset variables if loaded again
@@ -75,7 +79,6 @@ function homeRoute(req, res) {
 }
 
 // - Manage route -
-app.get('/manage', manageRoute);
 function manageRoute(req, res) {
   db.view('show', 'groups', function(err, body) {
     if (!err) {
@@ -83,6 +86,11 @@ function manageRoute(req, res) {
       res.render('manage', {items: items}); // Render and pass variables
     }
   });
+}
+
+// - Info route -
+function infoRoute(req, res) {
+      res.render('info', {}); // Render and pass variables
 }
 
 // - Start Server -
