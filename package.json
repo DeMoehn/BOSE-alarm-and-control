@@ -1,0 +1,14 @@
+{
+  "name": "DeMoehn_Homeautomation",
+  "version": "0.0.1",
+  "description": "Applikation for Homeautomation",
+  "dependencies": {
+    "compression": "*",
+    "dot": "^1.0.2",
+    "express": "*",
+    "express-dot": "^0.1.0",
+    "jade": "*",
+    "nano": "*",
+    "socket.io": "*"
+  }
+}

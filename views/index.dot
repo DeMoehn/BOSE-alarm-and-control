@@ -1,0 +1,31 @@
+<script src="js/index.js"></script>
+<div class="container theme-showcase" role="main" style="margin-top:70px;">
+  <div class="row">
+
+      {{~it.items :value:index}}
+        <div class="col-md-6">
+          <div class="panel panel-primary">
+            <div class="panel-heading"><strong>{{=value.value}}</strong></div>
+            <div class="panel-body">
+              <div class="row">
+
+                {{~value.devices :vvalue:iindex}}
+                <div class="col-xs-4">
+                  <h4><span class="label label-default">{{=vvalue.value.name}} <span id="{{=vvalue.id}}" class="badge"></span></span></h4>
+                  <button id="{{=vvalue.id}}1" type="button" class="btn btn-success" data-loading-text="Loading..." value='{"id":"{{=vvalue.id}}","status":1}'>
+                    <span style='padding-right:3px;'>Ein</span>
+                  </button>
+                  <button id="{{=vvalue.id}}0" type="button" class="btn btn-danger" data-loading-text="Loading..." value='{"id":"{{=vvalue.id}}","status":0}'>
+                    <span style='padding-right:3px;'>Aus</span>
+                  </button>
+                </div>
+                {{~}}
+
+              </div>
+            </div>
+          </div>
+        </div>
+      {{~}}
+
+  </div>
+</div>

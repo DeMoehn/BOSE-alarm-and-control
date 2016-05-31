@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Metatags -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="DeMoehn Homeautomation Website">
+    <meta name="author", content="DeMoehn">
+    <meta name="apple-mobile-web-app-capable", content="yes">
+    <!-- Favicons -->
+    <link rel="icon" sizes="16x16 32x32 48x48 64x64", href="img/favicon.ico">
+    <link rel="shortcut icon", href="img/favicon.ico">
+    <link rel="apple-touch-icon", href="img/favicon152.png">
+    <!-- iPhone  SPLASHSCREEN-->
+      <!-- iPhone -->
+      <link href="img/apple-touch-startup-image-320x460.png"
+              media="(device-width: 320px) and (device-height: 480px) and (-webkit-device-pixel-ratio: 1)"
+              rel="apple-touch-startup-image">
+      <!-- iPhone (Retina) -->
+      <link href="img/apple-touch-startup-image-640x920.png"
+              media="(device-width: 320px) and (device-height: 480px) and (-webkit-device-pixel-ratio: 2)"
+              rel="apple-touch-startup-image">
+      <!-- iPhone 5 -->
+      <link href="img/apple-touch-startup-image-640x1096.png"
+              media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)"
+              rel="apple-touch-startup-image">
+      <!-- iPad (portrait) -->
+      <link href="img/apple-touch-startup-image-768x1004.png"
+              media="(device-width: 768px) and (device-height: 1024px) and (orientation: portrait) and (-webkit-device-pixel-ratio: 1)"
+              rel="apple-touch-startup-image">
+      <!-- iPad (landscape) -->
+      <link href="img/apple-touch-startup-image-748x1024.png"
+              media="(device-width: 768px) and (device-height: 1024px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 1)"
+              rel="apple-touch-startup-image">
+      <!-- iPad (Retina, portrait) -->
+      <link href="img/apple-touch-startup-image-1536x2008.png"
+              media="(device-width: 768px) and (device-height: 1024px) and (orientation: portrait) and (-webkit-device-pixel-ratio: 2)"
+              rel="apple-touch-startup-image">
+      <!-- iPad (Retina, landscape) -->
+      <link href="img/apple-touch-startup-image-1496x2048.png"
+              media="(device-width: 768px) and (device-height: 1024px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 2)"
+              rel="apple-touch-startup-image">
+    <!-- Title -->
+    <title>DeMoehn home automation</title>
+    <!-- CSS -->
+    <link href="/src/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/src/bootstrap-3.2.0-dist/css/bootstrap-theme.min.css" rel="stylesheet">
+    <!-- Scripts -->
+    <script src="src/jquery-2.1.1.min.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.0.0.js"></script>
+  </head>
+
+  <body role="document">
+    <!-- Fixed navbar -->
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">DeMoehn home automation</a>
+        </div>
+        <div class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="/">Home</a></li>
+            <li><a href="/manage">Manage</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dynamic Body -->
+    {{=it.body}}
+
+    <!-- Bootstrap core JavaScript, placed at the end of the document so the pages load faster -->
+    <script src="src/bootstrap-3.2.0-dist/js/bootstrap.min.js"></script>
+  </body>
+</html>
