@@ -11,6 +11,7 @@
     "nano": "*",
     "socket.io": "*",
     "needle": "*",
-    "xml2js": "*"
+    "xml2js": "*",
+    "ws": "*"
   }
 }

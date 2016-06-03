@@ -1,0 +1,46 @@
+<script src="js/bose.js"></script>
+
+<div class="container theme-showcase" role="main" style="margin-top:70px;">
+  <div class="row">
+
+
+        <div class="col-md-6">
+          <div class="panel panel-primary">
+            <div class="panel-heading"><strong>Bose Controller</strong></div>
+            <div class="panel-body">
+              <div class="row">
+
+                <div class="col-xs-4">
+                  <h4><span class="label label-default">Presets<span id="ID" class="badge"></span></span></h4>
+                  <button id="Preset1" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='PRESET_1'><span style='padding-right:3px;'>1</span></button>
+                  <button id="Preset2" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='PRESET_2'><span style='padding-right:3px;'>2</span></button>
+                  <button id="Preset3" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='PRESET_3'><span style='padding-right:3px;'>3</span></button>
+                  <button id="Preset4" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='PRESET_4'><span style='padding-right:3px;'>4</span></button>
+                  <button id="Preset5" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='PRESET_5'><span style='padding-right:3px;'>5</span></button>
+                  <button id="Preset6" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='PRESET_6'><span style='padding-right:3px;'>6</span></button>
+                </div>
+
+                <div class="col-xs-4">
+                  <h4><span class="label label-default">Controls<span id="ID" class="badge"></span></span></h4>
+                  <button id="POWER" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='POWER'><span class="glyphicon glyphicon-off"  aria-hidden="true"></span></button>
+                  <button id="PLAY" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='PLAY'><span class="glyphicon glyphicon-play"  aria-hidden="true"></span></button>
+                  <button id="PAUSE" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='PAUSE'><span class="glyphicon glyphicon-pause"  aria-hidden="true"></span></button>
+                  <button id="PREV_TRACK" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='PREV_TRACK'><span class="glyphicon glyphicon-backward"  aria-hidden="true"></span></button>
+                  <button id="NEXT_TRACK" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='NEXT_TRACK'><span class="glyphicon glyphicon-forward"  aria-hidden="true"></span></button>
+                  <button id="THUMBS_UP" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='THUMBS_UP'><span class="glyphicon glyphicon-thumbs-up"  aria-hidden="true"></span></button>
+                </div>
+
+                <div class="col-xs-4">
+                  <h4><span class="label label-default">Volume<span id="ID" class="badge"></span></span></h4>
+                  <button id="VOLUME_DOWN" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='VOLUME_DOWN'><span class="glyphicon glyphicon-volume-down"  aria-hidden="true"></span></button>
+                  <button id="VOLUME_UP" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='VOLUME_UP'><span class="glyphicon glyphicon-volume-up"  aria-hidden="true"></span></button>
+                  <button id="MUTE" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='MUTE'><span class="glyphicon glyphicon-volume-off"  aria-hidden="true"></span></button>
+                  <div id="boseVolume" class="boseVolume">Current Volume: XX</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+  </div>
+</div>

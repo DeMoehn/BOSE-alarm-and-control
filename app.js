@@ -12,6 +12,7 @@ var server = require('http').Server(app); // Http Server
 var io = require('socket.io')(server); // IO Socket
 var needle = require('needle'); // HTTP Handler
 var parseString = require('xml2js').parseString; // Used to transform XML to JSON
+var WebSocket = require('ws'); // To use WebSockets
 
 // - Shell Scripts -
 var path = require('path');
@@ -47,6 +48,7 @@ app.use(express.static(__dirname + '/public')); // Use Express.static middleware
 app.get('/', homeRoute);
 app.get('/manage', manageRoute);
 app.get('/info', infoRoute);
+app.get('/bose', boseRoute);
 
 // - Home route -
 app.get('/home', homeRoute);
@@ -93,6 +95,11 @@ function manageRoute(req, res) {
 // - Info route -
 function infoRoute(req, res) {
       res.render('info', {}); // Render and pass variables
+}
+
+// - Bose Music route -
+function boseRoute(req, res) {
+      res.render('bose', {}); // Render and pass variables
 }
 
 // - Start Server -
@@ -163,6 +170,72 @@ function sendToBose(obj, data) {
 
 // more to come
 
+// ----------------------------
+// - BOSE Music Functions -
+// ----------------------------
+
+var url='192.168.0.13';
+var cmdport='8090';
+var wsport='8080';
+
+// - Send Key -
+function boseKey(data) {
+  var key = data[0];
+  xml='<key state="press" sender="Gabbo">'+key+'</key>';
+  post('key', xml, 'boseButtonPressedStatus', Array(data[1]));
+  xml='<key state="release" sender="Gabbo">'+key+'</key>';
+  post('key', xml,'boseButtonPressedStatus', Array(data[1]));
+}
+
+// - Do a Post -
+function post(page, str, socketName, socketBody) {
+  console.log(str);
+  var sendUrl = 'http://'+url+':'+cmdport+'/'+page;
+  needle.post(sendUrl, str, function(error, response) {
+    if (!error && response.statusCode == 200) {
+      console.log(response.body);
+      socketBody.push("success");
+    }else{
+      socketBody.push("error");
+    }
+    io.sockets.emit(socketName, socketBody); // Respond with JSON Object of btnData
+  });
+}
+
+var connection; // WebSocket Connection
+function listen() {
+  connection = new WebSocket('ws://' + url + ':' + wsport, "gabbo");
+  connection.onopen = function() {   console.log("Connection open. "); };
+  connection.onmessage = function(e) {
+    listenToData(e.data);
+  };
+  connection.onclose = function() {   console.log("Connection closed. "); };
+  connection.onerror = function() {
+      console.log("Connection error. ");
+    setTimeout(listen, 1000);
+  };
+}
+listen();
+
+function listenToData(data) {
+  parseString(data, function (err, result) {
+      cString = result;
+  });
+
+  if(cString.updates.nowPlayingUpdated) {
+    console.log("Song updated!");
+    console.log(cString.updates.nowPlayingUpdated[0]);
+  }else if(cString.updates.volumeUpdated) {
+    console.log("Volume updated!");
+    var volume = cString.updates.volumeUpdated[0].volume[0].targetvolume[0];
+    var muted = cString.updates.volumeUpdated[0].volume[0].muteenabled[0];
+    io.sockets.emit('boseVolumeUpdate', [volume, muted]); // Respond with JSON Object of btnData
+    console.log(JSON.stringify(cString.updates.volumeUpdated[0]));
+  }
+
+  console.log(cString);
+}
+
 // ------------------------
 // - Socket.io Settings -
 // ------------------------
@@ -179,6 +252,7 @@ io.on('connection', function(socket){
   socket.on('btnCategorySave', createNewCategory);
   socket.on('btnObjectSave', createNewObject);
   socket.on('boseWhatsPlaying', boseWhatsPlaying);
+  socket.on('boseButtonPressed', boseButtonPressed);
 });
 
 
@@ -237,4 +311,9 @@ io.on('connection', function(socket){
         io.sockets.emit('boseNowPlaying', response.body); // Respond with JSON Object of btnData
       });
 
+  }
+
+  // - Action on clicking Preset Button -
+  function boseButtonPressed(data, callback) {
+    boseKey(data);
   }

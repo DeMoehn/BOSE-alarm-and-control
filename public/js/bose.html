@@ -1,0 +1,54 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+<script language="JavaScript">
+var connection;
+function listen() {
+  connection = new WebSocket('ws://' + url + ':' + wsport, "gabbo");
+  connection.onopen = function() { $("#connstatus").text("Connection open. "); };
+  connection.onmessage = function(e) {
+    document.getElementById("messages").innerHTML += "<br /><br />";
+    document.getElementById("messages").innerText += e.data;
+  };
+  connection.onclose = function() { $("#connstatus").append("Connection closed. "); }
+  connection.onerror = function() {
+    $("#connstatus").text("Connection error. ");
+    setTimeout(listen, 1000);
+  }
+}
+// on page load
+function loaded() {
+  doc = document.documentElement.outerHTML;
+  listen();
+  $("#info").text(url);
+}
+</script>
+</head>
+<body onload="loaded();">
+<div id="info"></div>
+8090:
+<input type="button" value="trackInfo" onclick="bose('trackInfo');" />
+<input type="button" value="now_playing" onclick="bose('now_playing');" />
+<input type="button" value="info" onclick="bose('info');" />
+<br />Controls:
+<input type="button" value="1" onclick="preset(this);" />
+<input type="button" value="2" onclick="preset(this);" />
+<input type="button" value="3" onclick="preset(this);" />
+<input type="button" value="4" onclick="preset(this);" />
+<input type="button" value="5" onclick="preset(this);" />
+<input type="button" value="6" onclick="preset(this);" />
+<input type="button" value="POWER" onclick="key(this);" />
+<input type="button" value="VOLUME_DOWN" onclick="key(this);" />
+<input type="button" value="VOLUME_UP" onclick="key(this);" />
+<input type="button" value="STOP" onclick="key(this);" />
+<input type="button" value="PLAY" onclick="key(this);" />
+
+<pre><code><div id="target"></div></code></pre>
+<div id="ajaxstatus"></div>
+<pre><code><div id="connstatus"></div></code></pre>
+<div id="messages"></div>
+ <input type="button" value="GO TO SELF CONTAINED URL" onclick="location.href='data:text/html;base64,'+btoa(doc);" />
+
+</body>
+
+</html>

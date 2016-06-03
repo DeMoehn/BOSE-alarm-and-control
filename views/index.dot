@@ -34,7 +34,8 @@
           <div class="panel-body">
             <div class="row">
                 <div class="col-xs-12">
-                  <div id="boseplay">Lulu</div>
+                  <div id="connstatus">Lulu</div>
+                  <div id="messages"></div>
                 </div>
             </div>
           </div>

@@ -44,8 +44,9 @@
     <!-- Title -->
     <title>DeMoehn home automation</title>
     <!-- CSS -->
-    <link href="/src/bootstrap-3.2.0-dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/src/bootstrap-3.2.0-dist/css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="/src/bootstrap-3.3.6-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/src/bootstrap-3.3.6-dist/css/bootstrap-theme.min.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
     <!-- Scripts -->
     <script src="src/jquery-2.2.4.min.js"></script>
     <script src="https://cdn.socket.io/socket.io-1.0.0.js"></script>
@@ -66,6 +67,7 @@
             <li class="active"><a href="/">Home</a></li>
             <li><a href="/manage">Manage</a></li>
             <li><a href="/info">Info</a></li>
+            <li><a href="/bose">Bose Music</a></li>
           </ul>
         </div>
       </div>
@@ -75,6 +77,6 @@
     {{=it.body}}
 
     <!-- Bootstrap core JavaScript, placed at the end of the document so the pages load faster -->
-    <script src="src/bootstrap-3.2.0-dist/js/bootstrap.min.js"></script>
+    <script src="src/bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
   </body>
 </html>
