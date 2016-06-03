@@ -28,10 +28,13 @@ $(document).ready(function() { // Start when document is ready
   });
 
   socket.on('boseInfoUpdate', function(data) { // Listen for event "btnActionPressedStatus"
+  console.log(data);
     if(data.source == "SPOTIFY") { // It's playing Spotify
       $('.boseSongInfo').html(data.artist+' - <a href="'+data.trackID+'">'+data.track+"<a/><br />"+data.album);
       $('.boseArt').html('<img src="'+data.coverArt+'" width="300">');
     }else{ // It's playing radio
+
+
         $('.boseSongInfo').html(data.stationName+' ('+data.stationLocation+")"); // data.description
         $('.boseArt').html('<img src="'+data.coverArt+'" width="300">');
     }

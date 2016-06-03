@@ -227,6 +227,7 @@ function listenToData(data) {
 
 function handleBoseData(cString, type) {
   var boseInfo = { };
+  var stopSending = false; // Prevent from sending
 
   // Normalize data from Update Info or Requested Info
   if(type == "update") { // It's Update Information
@@ -256,6 +257,9 @@ function handleBoseData(cString, type) {
   if(boseInfo.type == "Music") {
     if(boseInfo.source == "SPOTIFY") { // Playing Spotify
       if(boseInfo.method == "update") {
+        if(cString.updates.nowPlayingUpdated[0].nowPlaying[0].artist[0] === "") {
+          stopSending = true;
+        }
         boseInfo.artist = cString.updates.nowPlayingUpdated[0].nowPlaying[0].artist[0];
         boseInfo.track = cString.updates.nowPlayingUpdated[0].nowPlaying[0].track[0];
         boseInfo.trackID = cString.updates.nowPlayingUpdated[0].nowPlaying[0].trackID[0];
@@ -271,10 +275,16 @@ function handleBoseData(cString, type) {
     }else if(boseInfo.source == "INTERNET_RADIO") { // Playing Radio
         console.log("RADIOOOOO!");
         if(boseInfo.method == "update") {
+          if(cString.updates.nowPlayingUpdated[0].nowPlaying[0].stationName[0] === "") {
+            stopSending = true;
+          }
           boseInfo.stationName  = cString.updates.nowPlayingUpdated[0].nowPlaying[0].stationName[0];
           boseInfo.description = cString.updates.nowPlayingUpdated[0].nowPlaying[0].description[0];
           boseInfo.coverArt = cString.updates.nowPlayingUpdated[0].nowPlaying[0].art[0]._;
           boseInfo.stationLocation = cString.updates.nowPlayingUpdated[0].nowPlaying[0].stationLocation[0];
+          if(cString.updates.nowPlayingUpdated[0].nowPlaying[0].stationLocation[0] === "") {
+            stopSending = true;
+          }
           console.log(JSON.stringify(cString.updates.nowPlayingUpdated[0].nowPlaying[0]));
         }else{
           boseInfo.stationName  = cString.nowPlaying.stationName ;
@@ -283,7 +293,13 @@ function handleBoseData(cString, type) {
           boseInfo.stationLocation = cString.nowPlaying.stationLocation;
         }
     }
-    io.sockets.emit('boseInfoUpdate', boseInfo); // Respond with JSON Object of btnData
+    if(!stopSending) {
+      io.sockets.emit('boseInfoUpdate', boseInfo); // Respond with JSON Object of btnData
+      console.log("____!!!! I did send !!!!_____");
+      console.log(boseInfo);
+    }else{
+      console.log("!!I DID NOT SEND THIS SHIT");
+    }
   }else if(boseInfo.type == "Volume") {
     console.log("- Volume updated -");
     var volume = cString.updates.volumeUpdated[0].volume[0].targetvolume[0];
