@@ -44,34 +44,36 @@
     <!-- Title -->
     <title>DeMoehn home automation</title>
     <!-- CSS -->
-    <link href="/src/bootstrap-3.3.6-dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="/src/bootstrap-3.3.6-dist/css/bootstrap-theme.min.css" rel="stylesheet">
     <link href="/css/style.css" rel="stylesheet">
+    <link href="/css/glyphicon.css" rel="stylesheet">
     <!-- Scripts -->
     <script src="src/jquery-2.2.4.min.js"></script>
     <script src="https://cdn.socket.io/socket.io-1.0.0.js"></script>
+    <script src="js/navbar.js"></script>
   </head>
 
   <body role="document">
     <!-- Fixed navbar -->
-    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-      <div class="container">
-        <div class="navbar-header">
-          <a class="navbar-brand" href="#">DeMoehn home automation</a>
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
-            <span class="sr-only">Toggle navigation</span>
-          </button>
-        </div>
-        <div class="navbar-collapse collapse">
-          <ul class="nav navbar-nav">
-            <li class="active"><a href="/">Home</a></li>
-            <li><a href="/manage">Manage</a></li>
-            <li><a href="/info">Info</a></li>
-            <li><a href="/bose">Bose Music</a></li>
-          </ul>
-        </div>
-      </div>
+    <div class="navbar" role="navigation">
+      <ul class="nav navbar-nav">
+        <li class="navbtn"><a href="/">Home</a></li>
+        <li class="navbtn"><a href="/manage">Manage</a></li>
+        <li class="navbtn"><a href="/bose">Bose Music</a></li>
+        <li class="navbtn" style="float: right"><a href="/info">Info</a></li>
+      </ul>
     </div>
+
+    <!-- <div class="container">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">DeMoehn home automation</a>
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+        </button>
+      </div>
+      <div class="navbar-collapse collapse">
+
+      </div>
+    </div> -->
 
     <!-- Dynamic Body -->
     {{=it.body}}

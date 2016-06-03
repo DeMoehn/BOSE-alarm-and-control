@@ -222,15 +222,76 @@ function listenToData(data) {
       cString = result;
   });
 
-  if(cString.updates.nowPlayingUpdated) {
-    console.log("Song updated!");
-    console.log(cString.updates.nowPlayingUpdated[0]);
-  }else if(cString.updates.volumeUpdated) {
-    console.log("Volume updated!");
+  handleBoseData(cString, "update");
+}
+
+function handleBoseData(cString, type) {
+  var boseInfo = { };
+
+  // Normalize data from Update Info or Requested Info
+  if(type == "update") { // It's Update Information
+    console.log("-- Song updated! --");
+
+    boseInfo.method = "update";
+    if(cString.updates.nowPlayingUpdated) {
+      boseInfo.type = "Music";
+      boseInfo.source = cString.updates.nowPlayingUpdated[0].nowPlaying[0].$.source;
+    }else if(cString.updates.volumeUpdated) {
+      boseInfo.type = "Volume";
+    }else if(cString.updates.connectionStateUpdated) {
+      boseInfo.type = "Connection";
+    }
+  }else{ // It's requested Information
+    console.log("-- Song information! --");
+
+    boseInfo.method = "info";
+    if(cString.nowPlaying) {
+      boseInfo.type = "Music";
+      boseInfo.source = cString.nowPlaying.$.source;
+    }else{
+      boseInfo.type = "Volume";
+    }
+  }
+
+  if(boseInfo.type == "Music") {
+    if(boseInfo.source == "SPOTIFY") { // Playing Spotify
+      if(boseInfo.method == "update") {
+        boseInfo.artist = cString.updates.nowPlayingUpdated[0].nowPlaying[0].artist[0];
+        boseInfo.track = cString.updates.nowPlayingUpdated[0].nowPlaying[0].track[0];
+        boseInfo.trackID = cString.updates.nowPlayingUpdated[0].nowPlaying[0].trackID[0];
+        boseInfo.album = cString.updates.nowPlayingUpdated[0].nowPlaying[0].album[0];
+        boseInfo.coverArt = cString.updates.nowPlayingUpdated[0].nowPlaying[0].art[0]._;
+      }else{
+        boseInfo.artist = cString.nowPlaying.artist;
+        boseInfo.track = cString.nowPlaying.track;
+        boseInfo.trackID = cString.nowPlaying.trackID;
+        boseInfo.album = cString.nowPlaying.album;
+        boseInfo.coverArt = cString.nowPlaying.art._;
+      }
+    }else if(boseInfo.source == "INTERNET_RADIO") { // Playing Radio
+        console.log("RADIOOOOO!");
+        if(boseInfo.method == "update") {
+          boseInfo.stationName  = cString.updates.nowPlayingUpdated[0].nowPlaying[0].stationName[0];
+          boseInfo.description = cString.updates.nowPlayingUpdated[0].nowPlaying[0].description[0];
+          boseInfo.coverArt = cString.updates.nowPlayingUpdated[0].nowPlaying[0].art[0]._;
+          boseInfo.stationLocation = cString.updates.nowPlayingUpdated[0].nowPlaying[0].stationLocation[0];
+          console.log(JSON.stringify(cString.updates.nowPlayingUpdated[0].nowPlaying[0]));
+        }else{
+          boseInfo.stationName  = cString.nowPlaying.stationName ;
+          boseInfo.description = cString.nowPlaying.description;
+          boseInfo.coverArt = cString.nowPlaying.art._;
+          boseInfo.stationLocation = cString.nowPlaying.stationLocation;
+        }
+    }
+    io.sockets.emit('boseInfoUpdate', boseInfo); // Respond with JSON Object of btnData
+  }else if(boseInfo.type == "Volume") {
+    console.log("- Volume updated -");
     var volume = cString.updates.volumeUpdated[0].volume[0].targetvolume[0];
     var muted = cString.updates.volumeUpdated[0].volume[0].muteenabled[0];
     io.sockets.emit('boseVolumeUpdate', [volume, muted]); // Respond with JSON Object of btnData
-    console.log(JSON.stringify(cString.updates.volumeUpdated[0]));
+    console.log(JSON.stringify(cString));
+  }else if(boseInfo.type == "Connection") {
+    console.log(" - Connection updated -");
   }
 
   console.log(cString);
@@ -298,19 +359,12 @@ io.on('connection', function(socket){
 
   // - Read Bose Information -
   function boseWhatsPlaying(obj) {
-    console.log("looking whats playing");
-    var currentObject = myObjects.find(x=> x.commandtype === "BOSE"); // Find Object where _id equals data.id
-    console.log("here the obj");
-    console.log(currentObject);
-
-      var docUrl = currentObject.code+'/now_playing';
-
-      needle.get(docUrl, function(error, response) {
-      if (!error && response.statusCode == 200)
-        console.log(response.body);
-        io.sockets.emit('boseNowPlaying', response.body); // Respond with JSON Object of btnData
-      });
-
+    var sendUrl = 'http://'+url+':'+cmdport+'/now_playing';
+    needle.get(sendUrl, function(error, response) {
+    if (!error && response.statusCode == 200)
+      console.log(response.body);
+      handleBoseData(response.body, "info"); // Respond with JSON Object of btnData
+    });
   }
 
   // - Action on clicking Preset Button -

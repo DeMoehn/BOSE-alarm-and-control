@@ -1,3 +1,140 @@
+/* - General Setup - */
+
+* {
+	margin: 0;
+}
+
+html, body {
+  height:100%;
+  width: 100%;
+}
+
+body {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  font-size: 14px;
+  line-height: 1.42857143;
+  color: #333;
+  background-color: #adadad;
+}
+
+/* - Links - */
+a {
+  text-decoration: underline dotted;
+  color: #333;
+}
+
+a:hover {
+  color: #008EBD;
+}
+
+a:visited {
+  color: #00A8E0;
+}
+
+/* Buttons */
+.btn {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+	background: #FFF;
+	border-style: solid;
+	border-width: 1px;
+	border-color: #000;
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  font-size: 13px;
+  padding: 2px 0px 0px 4px;
+  text-decoration: none;
+}
+
+.btn:hover {
+  border-color: #0CF;
+  text-decoration: none;
+}
+
+.input {
+	font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+	-webkit-border-radius: 3px;
+	-moz-border-radius: 3px;
+	border-radius: 3px;
+	padding: 5px;
+	border-style: solid;
+	border-width: 1px;
+	border-color: #000;
+}
+
+.input:hover {
+	border-color: #0CF;
+}
+
+.input:focus {
+	border-color: #0CF;
+}
+
+.inputproblem {
+	border-color: #FF1E00;
+}
+
+ /* - Navbar - */
+
+.navbar ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+}
+
+.navbar li {
+    float: left;
+}
+
+.navbar li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+.navbar li a:hover {
+    background-color: #111;
+}
+
+.navbar .navactive {
+    background-color: #4CAF50;
+}
+
+/* - Wrapper - */
+.wrapper_middle {
+  width: 90%;
+  margin: auto;
+}
+
+/* - Box Design - */
+.panel {
+  background-color: #4CAF50;
+}
+
+.panel-heading {
+  background-color: #333;
+  height: 40px;
+  color: #FFF;
+  font-size: 16px;
+  line-height: 40px;
+  font-weight: bold;
+  padding-left: 10px;
+}
+
+.panel-body {
+  vertical-align: top;
+  text-align: center;
+}
+
+.label {
+  color: #FFF;
+}
+
+ /* - BOSE - */
 .boseButton, .bosePreset {
   margin: 2px;
 }
@@ -5,4 +142,48 @@
 .boseVolume {
   margin: 2px;
   margin-top: 10px;
+}
+
+.boseArt {
+  vertical-align:middle;
+}
+.boseInfo {
+  margin: 10px;
+  padding: 5px;
+  width: 300px;
+  min-height: 350px;
+  overflow: hidden;
+  background-color: #FFF;
+  font-size: 15;
+  display: inline-block;
+  vertical-align:middle;
+}
+
+.boseSongInfo{
+  vertical-align:top;
+  text-align: center;
+}
+
+.boseButton {
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+}
+
+.boseControl {
+  background-color: #333;
+  display: inline-block;
+  padding: 10px;
+  vertical-align: top;
+  margin: 10px;
+  margin-left: 50px;
+  margin-top: 50px;
+}
+
+.boseControlGroup {
+  margin-bottom: 10px;
+}
+
+.boseVolume {
+  color: #FFF;
 }
