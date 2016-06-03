@@ -14,4 +14,18 @@ $(document).ready(function() { // Start when document is ready
       btn.button('reset');
     });
   });
+
+  socket.emit('boseWhatsPlaying', "hi!");
+  socket.on('boseNowPlaying', function(data) { // Listen for event "btnActionPressedStatus"
+  alert("here we go");
+    var station = "Sender: "+data.nowPlaying.stationName;
+    var art = data.nowPlaying.art._;
+    var description = data.nowPlaying.description;
+    // data.nowPlaying.art.$.IMAGE_PRESENT // Show if Imageexists or not
+    var songInfo = station;
+    songInfo += ' <img src="'+art+'" alt="'+station+' Logo" height="40">';
+    songInfo += '<br /> Beschreibung: '+description;
+    console.log(data);
+    $("#boseplay").html(songInfo);
+  });
 });

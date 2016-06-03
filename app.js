@@ -10,6 +10,8 @@ var compression = require('compression'); // gzip/deflate outgoing responses
 var app = express();
 var server = require('http').Server(app); // Http Server
 var io = require('socket.io')(server); // IO Socket
+var needle = require('needle'); // HTTP Handler
+var parseString = require('xml2js').parseString; // Used to transform XML to JSON
 
 // - Shell Scripts -
 var path = require('path');
@@ -131,7 +133,7 @@ function sendToDev(obj, data) {
 }
 
 function sendToBose(obj, data) {
-  var devcmd = obj.code;
+  var devcmd = 'curl -X POST '+obj.code+"/key -d '<key state=\"press\" sender=\"Gabbo\">POWER</key>'";
   var stat = data.status;
 
   exec(devcmd, function (err, stdout, stderr) { // Exceute command
@@ -141,11 +143,25 @@ function sendToBose(obj, data) {
       console.log(stdout);
     }
   });
+//   var options = {
+// headers: { 'X-Custom-Header': 'Bumbaway atuna' }
+// }
+//
+// needle.post('https://my.app.com/endpoint', 'foo=bar', options, function(err, resp) {
+// if (!error && response.statusCode == 200)
+//   console.log(response.body);
+// });
+// });
 
   obj.status = stat;
   io.sockets.emit('btnActionPressedStatus', obj); // Respond with JSON Object of btnData
 }
 
+// -----------------------
+// - Helper Functions -
+// -----------------------
+
+// more to come
 
 // ------------------------
 // - Socket.io Settings -
@@ -162,6 +178,7 @@ io.on('connection', function(socket){
   socket.on('btnActionPressed', actionButtonPressed);
   socket.on('btnCategorySave', createNewCategory);
   socket.on('btnObjectSave', createNewObject);
+  socket.on('boseWhatsPlaying', boseWhatsPlaying);
 });
 
 
@@ -203,4 +220,21 @@ io.on('connection', function(socket){
         console.log(body);
       }
     });
+  }
+
+  // - Read Bose Information -
+  function boseWhatsPlaying(obj) {
+    console.log("looking whats playing");
+    var currentObject = myObjects.find(x=> x.commandtype === "BOSE"); // Find Object where _id equals data.id
+    console.log("here the obj");
+    console.log(currentObject);
+
+      var docUrl = currentObject.code+'/now_playing';
+
+      needle.get(docUrl, function(error, response) {
+      if (!error && response.statusCode == 200)
+        console.log(response.body);
+        io.sockets.emit('boseNowPlaying', response.body); // Respond with JSON Object of btnData
+      });
+
   }

@@ -9,6 +9,8 @@
     "express-dot": "^0.1.0",
     "jade": "*",
     "nano": "*",
-    "socket.io": "*"
+    "socket.io": "*",
+    "needle": "*",
+    "xml2js": "*"
   }
 }
