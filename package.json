@@ -13,6 +13,7 @@
     "needle": "*",
     "xml2js": "*",
     "ws": "*",
-    "body-parser": "*"
+    "body-parser": "*",
+    "mdns": "*"
   }
 }
