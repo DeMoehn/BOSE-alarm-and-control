@@ -59,6 +59,7 @@
         <li class="navbtn"><a href="/">Home</a></li>
         <li class="navbtn"><a href="/manage">Manage</a></li>
         <li class="navbtn"><a href="/bose">Bose Music</a></li>
+        <li class="navbtn"><a href="/alarm">Bose Alarm</a></li>
         <li class="navbtn" style="float: right"><a href="/info">Info</a></li>
       </ul>
     </div>

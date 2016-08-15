@@ -2,6 +2,8 @@ var socket = io.connect(); // Create connection to node.js socket
 
 $(document).ready(function() { // Start when document is ready
   socket.emit('boseWhatsPlaying', ""); // Send event to Server
+  socket.emit('boseGetVolume', ""); // Send event to Server
+  socket.emit('boseGetSystems', ""); // Send event to Server
 
   // User interaction
   $('.boseButton').click(function(){ // Handle Event of Bose Preset Button click
@@ -38,5 +40,16 @@ $(document).ready(function() { // Start when document is ready
         $('.boseSongInfo').html(data.stationName+' ('+data.stationLocation+")"); // data.description
         $('.boseArt').html('<img src="'+data.coverArt+'" width="300">');
     }
+  });
+
+  socket.on('boseGetSystemsStatus', function(data) { // Listen for event "btnActionPressedStatus"
+    console.log(data);
+    data.forEach(function(system) { // For each Group
+      console.log(system);
+      var content = $('.boseSystems').html();
+      var systemC = '<div class="boseDevice"><img src="img/bose_soundtouch10.png" height="80">';
+      systemC += system.name+'</div>';
+      $('.boseSystems').html(content+systemC);
+    });
   });
 });

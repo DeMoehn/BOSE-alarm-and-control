@@ -5,6 +5,7 @@
   <div class="wrapper_middle">
         <!-- BOSE information -->
         <div>
+          <div class="boseSystems"></div>
           <div class="panel">
             <div class="panel-heading"><p>Bose Information</p></div>
             <div class="panel-body">

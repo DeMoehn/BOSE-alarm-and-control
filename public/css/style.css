@@ -14,7 +14,7 @@ body {
   font-size: 14px;
   line-height: 1.42857143;
   color: #333;
-  background-color: #adadad;
+  background-color: #000;
 }
 
 /* - Links - */
@@ -186,4 +186,97 @@ a:visited {
 
 .boseVolume {
   color: #FFF;
+}
+
+.boseSystems {
+  width: 90%;
+  height: 100px;
+  text-align: center;
+  background-color: #4CAF50;
+}
+
+.boseDevice {
+  display: inline-block;
+  vertical-align:middle;
+}
+
+/* Alarm settings */
+.alarm {
+	display: inline-block;
+}
+.alarmTime {
+	font-size: 20px;
+	font-weight: bold;
+}
+
+.alarmName {
+	display: inline-block;
+}
+
+.alarmDays {
+	display: inline-block;
+}
+
+.alarmInfo {
+	display: inline-block;
+}
+
+/* On/Off Switch */
+/* The switch - the box around the slider */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+/* Hide default HTML checkbox */
+.switch input {display:none;}
+
+/* The slider */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(20px);
+  -ms-transform: translateX(20px);
+  transform: translateX(20px);
+}
+
+/* Rounded sliders */
+.slider.round {
+  border-radius: 30px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
 }

@@ -49,6 +49,7 @@ app.get('/', homeRoute);
 app.get('/manage', manageRoute);
 app.get('/info', infoRoute);
 app.get('/bose', boseRoute);
+app.get('/alarm', alarmRoute);
 
 // - Home route -
 app.get('/home', homeRoute);
@@ -92,7 +93,7 @@ function manageRoute(req, res) {
   });
 }
 
-// - Info route -
+// - Info route - TODO: Create Info file!
 function infoRoute(req, res) {
       res.render('info', {}); // Render and pass variables
 }
@@ -100,6 +101,52 @@ function infoRoute(req, res) {
 // - Bose Music route -
 function boseRoute(req, res) {
       res.render('bose', {}); // Render and pass variables
+}
+
+// - Alarm Route -
+function alarmRoute(req, res) {
+  var sendUrl = "http://localhost:3333/api/timer";
+  needle.get(sendUrl, function(error, response) {
+    if (!error && response.statusCode == 200) {
+      console.log(response.body);
+      var alarmsArr = Array(); // Save modified alarms
+      response.body.alarms.forEach(function(alarm) { // For each Group
+        var myAlarm = {}; // Current alarm we are editing
+        myAlarm = alarm;
+        // Normalize the Alarm time, as the other script works with single values without "0" infront
+        var myAlarmTime = alarm.time.split(":");
+        if(myAlarmTime[0].length == 1) {
+          myAlarmTime[0] = "0"+myAlarmTime[0];
+        }
+        if(myAlarmTime[1].length == 1) {
+          myAlarmTime[1] = "0"+myAlarmTime[1];
+        }
+        myAlarm.time = myAlarmTime[0]+":"+myAlarmTime[1];
+
+        // Normalize days, as the other script needs integers and we want actual days
+        myAlarm.days = JSON.parse(alarm.days);
+        var weekday = new Array(7);
+        weekday[0]=  "So";
+        weekday[1] = "Mo";
+        weekday[2] = "Di";
+        weekday[3] = "Mi";
+        weekday[4] = "Do";
+        weekday[5] = "Fr";
+        weekday[6] = "Sa";
+        var newDays = Array();
+        myAlarm.days.forEach(function(day) { // For each Group
+          var newDay = weekday[day];
+          newDays.push(newDay);
+        });
+        myAlarm.days = newDays;
+        alarmsArr.push(myAlarm);
+      });
+
+      res.render('alarm', {items: alarmsArr}); // Render and pass variables
+    }else{
+      console.log(error);
+    }
+  });
 }
 
 // - Start Server -
@@ -257,9 +304,6 @@ function handleBoseData(cString, type) {
   if(boseInfo.type == "Music") {
     if(boseInfo.source == "SPOTIFY") { // Playing Spotify
       if(boseInfo.method == "update") {
-        if(cString.updates.nowPlayingUpdated[0].nowPlaying[0].artist[0] === "") {
-          stopSending = true;
-        }
         boseInfo.artist = cString.updates.nowPlayingUpdated[0].nowPlaying[0].artist[0];
         boseInfo.track = cString.updates.nowPlayingUpdated[0].nowPlaying[0].track[0];
         boseInfo.trackID = cString.updates.nowPlayingUpdated[0].nowPlaying[0].trackID[0];
@@ -275,17 +319,10 @@ function handleBoseData(cString, type) {
     }else if(boseInfo.source == "INTERNET_RADIO") { // Playing Radio
         console.log("RADIOOOOO!");
         if(boseInfo.method == "update") {
-          if(cString.updates.nowPlayingUpdated[0].nowPlaying[0].stationName[0] === "") {
-            stopSending = true;
-          }
           boseInfo.stationName  = cString.updates.nowPlayingUpdated[0].nowPlaying[0].stationName[0];
           boseInfo.description = cString.updates.nowPlayingUpdated[0].nowPlaying[0].description[0];
           boseInfo.coverArt = cString.updates.nowPlayingUpdated[0].nowPlaying[0].art[0]._;
           boseInfo.stationLocation = cString.updates.nowPlayingUpdated[0].nowPlaying[0].stationLocation[0];
-          if(cString.updates.nowPlayingUpdated[0].nowPlaying[0].stationLocation[0] === "") {
-            stopSending = true;
-          }
-          console.log(JSON.stringify(cString.updates.nowPlayingUpdated[0].nowPlaying[0]));
         }else{
           boseInfo.stationName  = cString.nowPlaying.stationName ;
           boseInfo.description = cString.nowPlaying.description;
@@ -299,11 +336,17 @@ function handleBoseData(cString, type) {
       console.log(boseInfo);
     }else{
       console.log("!!I DID NOT SEND THIS SHIT");
+      stopSending = false;
     }
   }else if(boseInfo.type == "Volume") {
     console.log("- Volume updated -");
-    var volume = cString.updates.volumeUpdated[0].volume[0].targetvolume[0];
-    var muted = cString.updates.volumeUpdated[0].volume[0].muteenabled[0];
+    if(boseInfo.method == "update") {
+      volume = cString.updates.volumeUpdated[0].volume[0].targetvolume[0];
+      muted = cString.updates.volumeUpdated[0].volume[0].muteenabled[0];
+    }else{
+      volume = cString.volume.targetvolume;
+      muted = cString.volume.muteenabled;
+    }
     io.sockets.emit('boseVolumeUpdate', [volume, muted]); // Respond with JSON Object of btnData
     console.log(JSON.stringify(cString));
   }else if(boseInfo.type == "Connection") {
@@ -329,7 +372,9 @@ io.on('connection', function(socket){
   socket.on('btnCategorySave', createNewCategory);
   socket.on('btnObjectSave', createNewObject);
   socket.on('boseWhatsPlaying', boseWhatsPlaying);
+  socket.on('boseGetVolume', boseGetVolume);
   socket.on('boseButtonPressed', boseButtonPressed);
+  socket.on('boseGetSystems', boseGetSystems);
 });
 
 
@@ -374,16 +419,40 @@ io.on('connection', function(socket){
   }
 
   // - Read Bose Information -
-  function boseWhatsPlaying(obj) {
+  function boseWhatsPlaying(obj, callbacl) {
     var sendUrl = 'http://'+url+':'+cmdport+'/now_playing';
     needle.get(sendUrl, function(error, response) {
     if (!error && response.statusCode == 200)
       console.log(response.body);
-      handleBoseData(response.body, "info"); // Respond with JSON Object of btnData
+      //handleBoseData(response.body, "info"); // Respond with JSON Object of btnData
+    });
+  }
+
+  // - Read Bose Volume -
+  function boseGetVolume(obj, callbacl) {
+    var sendUrl = 'http://'+url+':'+cmdport+'/volume';
+    needle.get(sendUrl, function(error, response) {
+    if (!error && response.statusCode == 200)
+      console.log(response.body);
+      //handleBoseData(response.body, "info"); // Respond with JSON Object of btnData
     });
   }
 
   // - Action on clicking Preset Button -
   function boseButtonPressed(data, callback) {
     boseKey(data);
+  }
+
+  // - List all Bose Systems -
+  function boseGetSystems(data, callback) {
+    var boseDevices = Array();
+    db.view('show', 'bose', function(err, devicesBody) { // Read all Objects
+      if (!err) {
+        devicesBody.rows.forEach(function(deviceDoc) { // For each Group
+          boseDevices.push(deviceDoc.value);
+        });
+      }
+      io.sockets.emit('boseGetSystemsStatus', boseDevices); // Respond with JSON Object of btnData
+      console.log("- Bose Systems read -");
+    });
   }
