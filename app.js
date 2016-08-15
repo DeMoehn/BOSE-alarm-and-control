@@ -36,6 +36,10 @@ var myGroups = Array();
 var myObjects = Array();
 var objectsScanned = false;
 
+// Other Variablesvar
+var myBoseDevices = Array();
+var activeBoseSystem = {name: "none"};
+var url = "192.168.0.135" // TODO: change static url to dynamic activeBoseSystem
 
 // ------------------
 // - Server Setup -
@@ -104,7 +108,7 @@ function infoRoute(req, res) {
 
 // - Bose Music route -
 function boseRoute(req, res) {
-      res.render('bose', {}); // Render and pass variables
+  res.render('bose', {items: myBoseDevices}); // Render and pass variables
 }
 
 // - Alarm Route -
@@ -229,25 +233,42 @@ function sendToBose(obj, data) {
 // - BOSE Music Functions -
 // ----------------------------
 
-var url='192.168.0.153';
-var cmdport='8090';
-var wsport='8080';
-
 // - Watch and recieve devices -
 // -- Watch all http servers --
-//var browser = mdns.createBrowser(mdns.tcp('soundtouch'));
 var sequence = [
     mdns.rst.DNSServiceResolve(),
     'DNSServiceGetAddrInfo' in mdns.dns_sd ? mdns.rst.DNSServiceGetAddrInfo() : mdns.rst.getaddrinfo({families:[0]}),
     mdns.rst.makeAddressesUnique()
 ];
 var browser = mdns.createBrowser(mdns.tcp('soundtouch'), {resolverSequence: sequence});
+
+// -- Read broadcasting devices and save them --
 browser.on('serviceUp', function(service) {
-  console.log("Found service: "+service.name+" - IP: "+service.addresses[0]+":"+service.port+" - MAC: "+service.txtRecord.MAC);
-  //console.log(service);
+  var newDevice = {};
+  newDevice.name = service.name;
+  newDevice.ip = service.addresses[0]
+  newDevice.cmdPort = service.port; // Command Port
+  newDevice.wsPort = '8080'; // WebSocket Port
+  newDevice.MAC = service.txtRecord.MAC;
+
+  var sendUrl = 'http://'+newDevice.ip+":"+newDevice.cmdPort+'/info';
+  needle.get(sendUrl, function(error, response) {
+    if (!error && response.statusCode == 200) {
+      console.log("Successfully asked: "+newDevice.name+" for information.");
+      newDevice.type = response.body.info.type;
+      newDevice.Account = response.body.info.margeAccountUUID;
+      console.log("Found service: "+service.name+" - IP: "+service.addresses[0]+":"+service.port+" - MAC: "+service.txtRecord.MAC);
+      myBoseDevices.push(newDevice);
+    }else{
+      console.log("Error asking: "+newDevice.name+" for information. No device saved!");
+    }
+  });
 });
+
+// -- Listen to devices that go down --
 browser.on('serviceDown', function(service) {
   console.log(service);
+  // TODO: Remove device from myBoseDevices
 });
 browser.start();
 
@@ -263,7 +284,7 @@ function boseKey(data) {
 // - Do a Post -
 function post(page, str, socketName, socketBody) {
   console.log(str);
-  var sendUrl = 'http://'+url+':'+cmdport+'/'+page;
+  var sendUrl = 'http://'+activeBoseSystem.ip+':'+activeBoseSystem.cmdPort+'/'+page;
   needle.post(sendUrl, str, function(error, response) {
     if (!error && response.statusCode == 200) {
       console.log(response.body);
@@ -277,16 +298,21 @@ function post(page, str, socketName, socketBody) {
 
 var connection; // WebSocket Connection
 function listen() {
-  connection = new WebSocket('ws://' + url + ':' + wsport, "gabbo");
-  connection.onopen = function() {   console.log("Connection open. "); };
-  connection.onmessage = function(e) {
-    listenToData(e.data);
-  };
-  connection.onclose = function() {   console.log("Connection closed. "); };
-  connection.onerror = function() {
+  if(activeBoseSystem.name !== "none") {
+    connection = new WebSocket('ws://' + activeBoseSystem.ip + ':' + activeBoseSystem.wsPort, "gabbo");
+    connection.onopen = function() {   console.log("Connection open to: "+activeBoseSystem.name); };
+    connection.onmessage = function(e) {
+      listenToData(e.data);
+    };
+    connection.onclose = function() {   console.log("Connection closed to: "+activeBoseSystem.name); };
+    connection.onerror = function() {
       console.log("Connection error. ");
+      setTimeout(listen, 1000);
+    };
+  }else{
+    console.log("Currently no BOSE System to listen... (retry in 1s)");
     setTimeout(listen, 1000);
-  };
+  }
 }
 listen();
 
@@ -302,6 +328,9 @@ function handleBoseData(cString, type) {
   var boseInfo = { };
   var stopSending = false; // Prevent from sending
 
+  console.log("!!!!!Getting Data to handle!");
+  console.log(cString);
+  console.log(type);
   // Normalize data from Update Info or Requested Info
   if(type == "update") { // It's Update Information
     console.log("-- Song updated! --");
@@ -322,6 +351,7 @@ function handleBoseData(cString, type) {
     if(cString.nowPlaying) {
       boseInfo.type = "Music";
       boseInfo.source = cString.nowPlaying.$.source;
+      console.log(cString.nowPlaying.$.source);
     }else{
       boseInfo.type = "Volume";
     }
@@ -330,11 +360,17 @@ function handleBoseData(cString, type) {
   if(boseInfo.type == "Music") {
     if(boseInfo.source == "SPOTIFY") { // Playing Spotify
       if(boseInfo.method == "update") {
-        boseInfo.artist = cString.updates.nowPlayingUpdated[0].nowPlaying[0].artist[0];
-        boseInfo.track = cString.updates.nowPlayingUpdated[0].nowPlaying[0].track[0];
-        boseInfo.trackID = cString.updates.nowPlayingUpdated[0].nowPlaying[0].trackID[0];
-        boseInfo.album = cString.updates.nowPlayingUpdated[0].nowPlaying[0].album[0];
-        boseInfo.coverArt = cString.updates.nowPlayingUpdated[0].nowPlaying[0].art[0]._;
+        try {
+          boseInfo.artist = cString.updates.nowPlayingUpdated[0].nowPlaying[0].artist[0];
+          boseInfo.type = cString.updates.nowPlayingUpdated[0].nowPlaying[0].type[0];
+          boseInfo.track = cString.updates.nowPlayingUpdated[0].nowPlaying[0].track[0];
+          boseInfo.trackID = cString.updates.nowPlayingUpdated[0].nowPlaying[0].trackID[0];
+          boseInfo.album = cString.updates.nowPlayingUpdated[0].nowPlaying[0].album[0];
+          boseInfo.coverArt = cString.updates.nowPlayingUpdated[0].nowPlaying[0].art[0]._;
+        } catch (err) {
+          console.log("!!!!! ERROR !!!!!");
+          console.log(err);
+        }
       }else{
         boseInfo.artist = cString.nowPlaying.artist;
         boseInfo.track = cString.nowPlaying.track;
@@ -374,12 +410,9 @@ function handleBoseData(cString, type) {
       muted = cString.volume.muteenabled;
     }
     io.sockets.emit('boseVolumeUpdate', [volume, muted]); // Respond with JSON Object of btnData
-    console.log(JSON.stringify(cString));
   }else if(boseInfo.type == "Connection") {
     console.log(" - Connection updated -");
   }
-
-  console.log(cString);
 }
 
 // ------------------------
@@ -400,7 +433,8 @@ io.on('connection', function(socket){
   socket.on('boseWhatsPlaying', boseWhatsPlaying);
   socket.on('boseGetVolume', boseGetVolume);
   socket.on('boseButtonPressed', boseButtonPressed);
-  socket.on('boseGetSystems', boseGetSystems);
+  socket.on('boseGetSystem', boseGetSystem);
+  socket.on('boseDeviceButtonPressed', boseDeviceButtonPressed);
 });
 
 
@@ -446,22 +480,31 @@ io.on('connection', function(socket){
 
   // - Read Bose Information -
   function boseWhatsPlaying(obj, callbacl) {
-    var sendUrl = 'http://'+url+':'+cmdport+'/now_playing';
-    needle.get(sendUrl, function(error, response) {
-    if (!error && response.statusCode == 200)
-      console.log(response.body);
-      //handleBoseData(response.body, "info"); // Respond with JSON Object of btnData
-    });
+    if(activeBoseSystem.name !== "none") {
+        var sendUrl = 'http://'+activeBoseSystem.ip+':'+activeBoseSystem.cmdPort+'/now_playing';
+        needle.get(sendUrl, function(error, response) {
+          if (!error && response.statusCode == 200) {
+            handleBoseData(response.body, "info"); // Respond with JSON Object of btnData
+          }else{
+            console.log(error);
+          }
+        });
+      }else{
+        console.log("Currently no BOSE system to listen");
+      }
   }
 
   // - Read Bose Volume -
-  function boseGetVolume(obj, callbacl) {
-    var sendUrl = 'http://'+url+':'+cmdport+'/volume';
-    needle.get(sendUrl, function(error, response) {
-    if (!error && response.statusCode == 200)
-      console.log(response.body);
-      //handleBoseData(response.body, "info"); // Respond with JSON Object of btnData
-    });
+  function boseGetVolume(obj, callback) {
+    if(activeBoseSystem.name !== "none") {
+      var sendUrl = 'http://'+activeBoseSystem.ip+':'+activeBoseSystem.cmdPort+'/volume';
+      needle.get(sendUrl, function(error, response) {
+      if (!error && response.statusCode == 200)
+        handleBoseData(response.body, "info"); // Respond with JSON Object of btnData
+      });
+    }else{
+      console.log("Currently no BOSE system to listen");
+    }
   }
 
   // - Action on clicking Preset Button -
@@ -469,16 +512,23 @@ io.on('connection', function(socket){
     boseKey(data);
   }
 
-  // - List all Bose Systems -
-  function boseGetSystems(data, callback) {
-    var boseDevices = Array();
-    db.view('show', 'bose', function(err, devicesBody) { // Read all Objects
-      if (!err) {
-        devicesBody.rows.forEach(function(deviceDoc) { // For each Group
-          boseDevices.push(deviceDoc.value);
-        });
-      }
-      io.sockets.emit('boseGetSystemsStatus', boseDevices); // Respond with JSON Object of btnData
-      console.log("- Bose Systems read -");
-    });
+  // - Respind with active System
+  function boseGetSystem(data, callback) {
+    var activeSystem = "";
+    if(activeBoseSystem.name === "none") {
+      activeSystem = "none"
+    }else{
+      activeSystem = activeBoseSystem.MAC;
+    }
+    console.log(activeSystem);
+    io.sockets.emit('boseGetSystemUpdate', activeSystem); // Respond with JSON Object of btnData
+  }
+
+  // - Change active BOSE System -
+  function boseDeviceButtonPressed(obj) {
+    var newBose = myBoseDevices.find(x=> x.MAC === obj);
+    activeBoseSystem = newBose; // Change to new system
+    listen(); // Listen to new System
+    boseGetSystem(); // Send new active system
+    console.log("- Active BOSE System changed: "+newBose.name+" -");
   }

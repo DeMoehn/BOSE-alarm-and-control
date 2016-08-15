@@ -5,9 +5,29 @@
   <div class="wrapper_middle">
         <!-- BOSE information -->
         <div>
-          <div class="boseSystems"></div>
+          <div class="panel-heading"><p>Bose Systems</p></div>
+          <div class="boseSystems">
+            {{~it.items :value:index}}
+              <div class="boseDevice" data-value="{{=value.MAC}}" id="{{=value.MAC}}">
+                <table>
+                  <tr><td>
+                    {{? value.type == "SoundTouch 10" }}
+                      <img src="img/SoundTouch10.png" height="60">
+                    {{?? value.type == "SoundTouch 20" }}
+                      <img src="img/SoundTouch20.png" height="60">
+                    {{??}}
+                    {{?}}
+                  </tr></td>
+                  <tr><td>
+                    {{=value.name}}
+                  </tr></td>
+                </table>
+              </div>
+            {{~}}
+          </div>
+
           <div class="panel">
-            <div class="panel-heading"><p>Bose Information</p></div>
+            <div class="panel-heading"><p>System Information & Controls</p></div>
             <div class="panel-body">
               <div class="boseContent">
                 <div class="boseInfo">

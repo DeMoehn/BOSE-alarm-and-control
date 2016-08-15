@@ -48,7 +48,7 @@
     <link href="/css/glyphicon.css" rel="stylesheet">
     <!-- Scripts -->
     <script src="src/jquery-2.2.4.min.js"></script>
-    <script src="https://cdn.socket.io/socket.io-1.0.0.js"></script>
+    <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <script src="js/navbar.js"></script>
   </head>
 

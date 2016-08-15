@@ -340,7 +340,9 @@ function checkTime() {
       if(alarm.active === true) {
         if( (alarmDays.includes(currentDay)) && (currentHour == alarmHour) && (currentMinute == alarmMinute) ) {
           console.log("ALARM! Alarm: "+alarm.name+" is met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute);
-          startBose();
+          startBose("PRESET_5");
+          boseVolume(20);
+          startBose("SHUFFLE_ON");
         }else{
           if(alarmDays.includes(currentDay)) {
             console.log("Alarm: "+alarm.name+" is running. Day met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute);
@@ -376,33 +378,13 @@ function execCMD(cmd, url, endpoint) {
 
 // - Send Key -
 function startBose(key) {
-  var url = '192.168.0.135:8090'; // 192.168.0.153 - 135 (office)
+  var url = '192.168.0.153:8090'; // 192.168.0.153 - 135 (office)
   var cmdP = '<key state="press" sender="Gabbo">'+key+'</key>';
   var cmdR = '<key state="release" sender="Gabbo">'+key+'</key>';
-  execCMD(cmdP, url, "key");
-  execCMD(cmdR, url, "key");
-
-  // var devcmd = 'curl -X POST '+url+"/key -d '<key state=\"press\" sender=\"Gabbo\">POWER</key>'";
-  // exec(devcmd, function (err, stdout, stderr) { // Exceute command
-  //   if (err) {
-  //     console.log('exec error: ' + err);
-  //   }else{
-  //     console.log(stdout);
-  //   }
-  // });
-  // var url2='192.168.0.153:8090'; // 192.168.0.153 - 135 (office)
-  // var devcmd2 = 'curl -X POST '+url2+"/key -d '<key state=\"press\" sender=\"Gabbo\">POWER</key>'";
-  // exec(devcmd2, function (err, stdout, stderr) { // Exceute command
-  //   if (err) {
-  //     console.log('exec error: ' + err);
-  //   }else{
-  //     console.log(stdout);
-  //   }
-  // });
 }
 
 function boseVolume(vol) {
-  var url = '192.168.0.135:8090'; // 192.168.0.153 - 135 (office)
+  var url = '192.168.0.153:8090'; // 192.168.0.153 - 135 (office)
   var cmdV = '<volume>'+vol+'</volume>';
   execCMD(cmdV, url, "volume");
 }
