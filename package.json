@@ -1,6 +1,6 @@
 {
   "name": "DeMoehn_Homeautomation",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Applikation for Homeautomation",
   "dependencies": {
     "compression": "*",
@@ -12,6 +12,7 @@
     "socket.io": "*",
     "needle": "*",
     "xml2js": "*",
-    "ws": "*"
+    "ws": "*",
+    "body-parser": "*"
   }
 }
