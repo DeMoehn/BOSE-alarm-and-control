@@ -13,6 +13,10 @@ var io = require('socket.io')(server); // IO Socket
 var needle = require('needle'); // HTTP Handler
 var parseString = require('xml2js').parseString; // Used to transform XML to JSON
 var WebSocket = require('ws'); // To use WebSockets
+var mdns = require('mdns'); // MDNS Tool to discover devices
+
+// discover all available service types
+var all_the_types = mdns.browseThemAll(); // all_the_types is just another browser...
 
 // - Shell Scripts -
 var path = require('path');
@@ -46,13 +50,13 @@ app.use(express.static(__dirname + '/public')); // Use Express.static middleware
 
 // - Routes -
 app.get('/', homeRoute);
+app.get('/home', homeRoute);
 app.get('/manage', manageRoute);
 app.get('/info', infoRoute);
 app.get('/bose', boseRoute);
 app.get('/alarm', alarmRoute);
 
 // - Home route -
-app.get('/home', homeRoute);
 function homeRoute(req, res) {
   myGroups = []; // Reset variables if loaded again
   myObjects = [];
@@ -153,6 +157,9 @@ function alarmRoute(req, res) {
 server.listen(3000, function() { // Create Server on 3000
   console.log('listening on http://localhost:3000');
 });
+// - Advertise a http server on port 3000 (via MDNS)-
+var ad = mdns.createAdvertisement(mdns.tcp('http'), 4321);
+ad.start();
 
 
 // ------------------------
@@ -190,6 +197,7 @@ function sendToBose(obj, data) {
   var devcmd = 'curl -X POST '+obj.code+"/key -d '<key state=\"press\" sender=\"Gabbo\">POWER</key>'";
   var stat = data.status;
 
+  console.log('Device - Command: '+send);
   exec(devcmd, function (err, stdout, stderr) { // Exceute command
     if (err) {
       console.log('exec error: ' + err);
@@ -197,15 +205,15 @@ function sendToBose(obj, data) {
       console.log(stdout);
     }
   });
-//   var options = {
-// headers: { 'X-Custom-Header': 'Bumbaway atuna' }
-// }
-//
-// needle.post('https://my.app.com/endpoint', 'foo=bar', options, function(err, resp) {
-// if (!error && response.statusCode == 200)
-//   console.log(response.body);
-// });
-// });
+  //   var options = {
+  // headers: { 'X-Custom-Header': 'Bumbaway atuna' }
+  // }
+  //
+  // needle.post('https://my.app.com/endpoint', 'foo=bar', options, function(err, resp) {
+  // if (!error && response.statusCode == 200)
+  //   console.log(response.body);
+  // });
+  // });
 
   obj.status = stat;
   io.sockets.emit('btnActionPressedStatus', obj); // Respond with JSON Object of btnData
@@ -221,9 +229,20 @@ function sendToBose(obj, data) {
 // - BOSE Music Functions -
 // ----------------------------
 
-var url='192.168.0.13';
+var url='192.168.0.153';
 var cmdport='8090';
 var wsport='8080';
+
+// - Watch and recieve devices -
+// -- Watch all http servers --
+var browser = mdns.createBrowser(mdns.tcp('soundtouch'));
+browser.on('serviceUp', function(service) {
+  console.log("Found service: "+service.name+" - IP: "+service.addresses[0]+":"+service.port+" - MAC: "+service.txtRecord.MAC);
+});
+browser.on('serviceDown', function(service) {
+  console.log(service);
+});
+browser.start();
 
 // - Send Key -
 function boseKey(data) {
