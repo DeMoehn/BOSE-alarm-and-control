@@ -235,9 +235,16 @@ var wsport='8080';
 
 // - Watch and recieve devices -
 // -- Watch all http servers --
-var browser = mdns.createBrowser(mdns.tcp('soundtouch'));
+//var browser = mdns.createBrowser(mdns.tcp('soundtouch'));
+var sequence = [
+    mdns.rst.DNSServiceResolve(),
+    'DNSServiceGetAddrInfo' in mdns.dns_sd ? mdns.rst.DNSServiceGetAddrInfo() : mdns.rst.getaddrinfo({families:[0]}),
+    mdns.rst.makeAddressesUnique()
+];
+var browser = mdns.createBrowser(mdns.tcp('soundtouch'), {resolverSequence: sequence});
 browser.on('serviceUp', function(service) {
   console.log("Found service: "+service.name+" - IP: "+service.addresses[0]+":"+service.port+" - MAC: "+service.txtRecord.MAC);
+  //console.log(service);
 });
 browser.on('serviceDown', function(service) {
   console.log(service);
