@@ -1,0 +1,51 @@
+.unselectable {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+::selection {
+  	background: none;
+}
+::-moz-selection {
+  	background: none;
+}
+.checklist {
+	border: 1px solid #333333;
+	border-radius: 0px;
+  background-color: #FFFFFF;
+	display: inline-block;
+	width: auto;
+	padding: 0px
+  -webkit-border-radius: 3px;
+  -moz-border-radius: 3px;
+  border-radius: 3px;
+  padding: 2px;
+}
+.checklist > * {
+	display: inline-block;
+	padding: 2px 0px;
+	width: 25px;
+	cursor: pointer;
+	text-align: center;
+	color: #000;
+	border: 1px solid transparent;
+	font-size: 11px;
+  margin-left: 0px;
+}
+
+.checklist > .active {
+  background-color: #2b58e1;
+	color: #FFF;
+}
+
+.checklist [data-disabled="true"] {
+	cursor: not-allowed;
+}
+
+.checklist input {
+	display: none;
+}

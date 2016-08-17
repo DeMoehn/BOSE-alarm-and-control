@@ -32,10 +32,6 @@ var runningAlarms = Array(); // Create an Array for all running alarms
 // -----------------------
 initializeAlarms(); // Load all saved alarms from DB
 var alarmInterval = setInterval(checkTime, 55000); // Start the Alarm - Interval (55sec)
-// TODO: Do some further testing!
-// startBose("PRESET_5");
-// boseVolume(20);
-// startBose("SHUFFLE_ON");
 
 
 // -----------------------
@@ -53,13 +49,14 @@ router.use(function(req, res, next) {
 // - Routes for all Timer actions -
 // -- Create a new Timer --
 router.route('/timer').post(function(req, res) {
-  if(req.query.time !== undefined && req.query.days !== undefined && req.query.name !== undefined) { // If all needed Parameters are set
+  if(req.body.time !== undefined && req.body.days !== undefined && req.body.name !== undefined && req.body.active !== undefined && req.body.device !== undefined) { // If all needed Parameters are set
     var data = {}; // Create new object
     data.type = "alarm";
-    data.name = req.query.name;
-    data.time = req.query.time;
-    data.days = req.query.days;
-    data.active = true;
+    data.name = req.body.name;
+    data.time = req.body.time;
+    data.days = req.body.days;
+    data.active = req.body.active;
+    data.device = req.body.device;
 
     db.insert(data, function(err, body, header) { // Insert Object to DB
       if (!err) {
@@ -71,7 +68,7 @@ router.route('/timer').post(function(req, res) {
     });
 
   }else if( (req.query.time === undefined) || (req.query.days === undefined) || (req.query.name === undefined) ) { // Neede Parameters not set
-    res.json({error: true, desc: "Parameters (time, days and name) are needed!", data: req.query}); // Respond with error
+    res.json({error: true, desc: "Parameters (name, time, days, active and device) are needed!", data: req.query}); // Respond with error
   }
 });
 
@@ -337,14 +334,14 @@ function checkTime() {
       var alarmHour = alarm.time.split(":")[0];
       var alarmMinute= alarm.time.split(":")[1];
 
-      if(alarm.active === true) {
-        if( (alarmDays.includes(currentDay)) && (currentHour == alarmHour) && (currentMinute == alarmMinute) ) {
+      if(alarm.active === "true") {
+        if( (alarmDays.indexOf(currentDay) > -1) && (currentHour == alarmHour) && (currentMinute == alarmMinute) ) {
           console.log("ALARM! Alarm: "+alarm.name+" is met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute);
           startBose("PRESET_5");
           boseVolume(20);
           startBose("SHUFFLE_ON");
         }else{
-          if(alarmDays.includes(currentDay)) {
+          if(alarmDays.indexOf(currentDay) > -1) {
             console.log("Alarm: "+alarm.name+" is running. Day met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute);
           }else{
             console.log("Alarm: "+alarm.name+" is running. Day not met! Days: "+alarm.days);
@@ -381,6 +378,8 @@ function startBose(key) {
   var url = '192.168.0.153:8090'; // 192.168.0.153 - 135 (office)
   var cmdP = '<key state="press" sender="Gabbo">'+key+'</key>';
   var cmdR = '<key state="release" sender="Gabbo">'+key+'</key>';
+  execCMD(cmdP, url, "key");
+  execCMD(cmdR, url, "key");
 }
 
 function boseVolume(vol) {

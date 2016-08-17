@@ -20,20 +20,77 @@
                     </div>
                   </td>
                   <td>
-                    <label class="switch">
-                      {{? value.active == true }}
-                        <input type="checkbox" checked>
-                        {{?? value.active == false}}
-                          <input type="checkbox">
-                        {{??}}
-                      {{?}}
-                      <div class="slider round"></div>
-                    </label>
+                    <div class="switch">
+                      <label class="switch">
+                        <input class="switch-input" type="checkbox" id="{{=value._id}}" data-rev="{{=value._rev}}" checked/>
+                        <span class="switch-label" data-on="On" data-off="Off"></span>
+                        <span class="switch-handle"></span>
+                      </label>
+                    </div>
                   </td>
                 </tr>
               {{~}}
             </table>
           </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-heading"><p>Create new Alarm</p></div>
+        <div class="panel-body">
+          <table class="alarmCreateTable">
+            <tr>
+              <td class="alarm_left_td">Name:</td>
+              <td><input type="text" name="alarmname" class="input alarmname"><br></td>
+            </tr>
+            <tr>
+              <td class="alarm_left_td">Time:</td>
+              <td><input type="time" name="alarmtime" class="input alarmtime" placeholder="00:00"></td>
+            </tr>
+            <tr>
+              <td class="alarm_left_td">Days:</td>
+              <td>
+                <ul id="alarmdays">
+                  <li>Su</li>
+                  <li>Mo</li>
+                  <li>Tu</li>
+                  <li>We</li>
+                  <li>Th</li>
+                  <li>Fr</li>
+                  <li>Sa</li>
+                </ul>
+              </td>
+            </tr>
+            <tr>
+              <td class="alarm_left_td">Active:</td>
+              <td>
+                <div class="switch" id="alarmswitch">
+                  <label class="switch">
+                    <input class="switch-input alarmactive" type="checkbox" id="alarmsactive" checked/>
+                    <span class="switch-label" data-on="On" data-off="Off"></span>
+                    <span class="switch-handle"></span>
+                  </label>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="alarm_left_td">Device:</td>
+              <td>
+                <select name="top5" class="select" id="alarmdevice">
+                  <option>Heino</option>
+                  <option>Michael Jackson</option>
+                  <option>Tom Waits</option>
+                  <option>Nina Hagen</option>
+                  <option>Marianne Rosenberg</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td></
+              <td class="alarm_both_td">
+                <button type="button" class="btn" id="alarmsave">Save</button>
+              </td>
+            </tr>
+          </table>
         </div>
       </div>
     </div>
