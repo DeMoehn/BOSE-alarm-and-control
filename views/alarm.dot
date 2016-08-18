@@ -46,10 +46,10 @@
               <td class="alarm_left_td">Time:</td>
               <td><input type="time" name="alarmtime" class="input alarmtime" placeholder="00:00"></td>
             </tr>
-            <tr>
+            <tr class="unselectable">
               <td class="alarm_left_td">Days:</td>
               <td>
-                <ul id="alarmdays">
+                <ul id="alarmdays" class="unselectable">
                   <li>Su</li>
                   <li>Mo</li>
                   <li>Tu</li>
@@ -85,7 +85,7 @@
               </td>
             </tr>
             <tr>
-              <td></
+              <td></td>
               <td class="alarm_both_td">
                 <button type="button" class="btn" id="alarmsave">Save</button>
               </td>

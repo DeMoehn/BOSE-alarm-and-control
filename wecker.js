@@ -375,7 +375,7 @@ function execCMD(cmd, url, endpoint) {
 
 // - Send Key -
 function startBose(key) {
-  var url = '192.168.0.153:8090'; // 192.168.0.153 - 135 (office)
+  var url = '192.168.1.27:8090'; // 192.168.0.153 - 135 (office)
   var cmdP = '<key state="press" sender="Gabbo">'+key+'</key>';
   var cmdR = '<key state="release" sender="Gabbo">'+key+'</key>';
   execCMD(cmdP, url, "key");
