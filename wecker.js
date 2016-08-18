@@ -95,7 +95,7 @@ router.route('/timer').get(function(req, res) {
   });
 });
 
-// -- Delete all timers (Be careful!) --
+// -- Delete all timers (be careful!) --
 router.route('/timer').delete(function(req, res) {
   if(req.query.token === undefined) {
     res.json({error:true, disc: "Deleting all Alarms need a security token"}); // Respond with error
