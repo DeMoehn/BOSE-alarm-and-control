@@ -114,6 +114,25 @@ function boseRoute(req, res) {
 
 // - Alarm Route -
 function alarmRoute(req, res) {
+  loadAlarms();
+  res.render('alarm', ""); // Render and pass variables
+};
+
+// - Start Server -
+server.listen(3000, function() { // Create Server on 3000
+  console.log('listening on http://localhost:3000');
+});
+// - Advertise a http server on port 3000 (via MDNS)-
+var ad = mdns.createAdvertisement(mdns.tcp('http'), 4321);
+ad.start();
+
+
+// ------------------------
+// - General Functions -
+// -----------------------
+
+// - Helpers for the routes -
+function loadAlarms() {
   var sendUrl = "http://localhost:3333/api/timer";
   needle.get(sendUrl, function(error, response) {
     if (!error && response.statusCode == 200) {
@@ -150,26 +169,12 @@ function alarmRoute(req, res) {
         myAlarm.days = newDays;
         alarmsArr.push(myAlarm);
       });
-
-      res.render('alarm', {items: alarmsArr}); // Render and pass variables
+      io.sockets.emit('getAlarmsStatus', alarmsArr); // Respond with JSON Object of btnData
     }else{
       console.log(error);
     }
   });
 }
-
-// - Start Server -
-server.listen(3000, function() { // Create Server on 3000
-  console.log('listening on http://localhost:3000');
-});
-// - Advertise a http server on port 3000 (via MDNS)-
-var ad = mdns.createAdvertisement(mdns.tcp('http'), 4321);
-ad.start();
-
-
-// ------------------------
-// - General Functions -
-// -----------------------
 
 // - Send to Intertechno Device -
 function sendToDev(obj, data) {
@@ -226,7 +231,7 @@ function sendToBose(obj, data) {
 // ----------------------------
 
 // - Watch and recieve devices -
-// -- Watch all http servers --
+// -- Watch all http servers -- TODO: Don't search on your own, use wecker.js API!
 var sequence = [
     mdns.rst.DNSServiceResolve(),
     'DNSServiceGetAddrInfo' in mdns.dns_sd ? mdns.rst.DNSServiceGetAddrInfo() : mdns.rst.getaddrinfo({families:[0]}),
@@ -432,10 +437,14 @@ io.on('connection', function(socket){
   socket.on('boseGetVolume', boseGetVolume);
   socket.on('boseButtonPressed', boseButtonPressed);
   socket.on('boseGetSystem', boseGetSystem);
+  socket.on('boseGetDevices', boseGetDevices);
   socket.on('boseDeviceButtonPressed', boseDeviceButtonPressed);
   socket.on('alarmActiveState', alarmActiveState);
   socket.on('alarmActiveChanged', alarmActiveChanged);
   socket.on('alarmSaved', alarmSaved);
+  socket.on('alarmDelete', alarmDelete);
+  socket.on('alarmEdit', alarmEdit);
+  socket.on('getAlarms', getAlarms);
 });
 
 
@@ -513,7 +522,7 @@ io.on('connection', function(socket){
     boseKey(data);
   }
 
-  // - Respind with active System
+  // - Respond with active System
   function boseGetSystem(data, callback) {
     var activeSystem = "";
     if(activeBoseSystem.name === "none") {
@@ -523,6 +532,11 @@ io.on('connection', function(socket){
     }
     console.log(activeSystem);
     io.sockets.emit('boseGetSystemUpdate', activeSystem); // Respond with JSON Object of btnData
+  }
+
+  // - Respond with all known Bose devices -
+  function boseGetDevices(data, callback) {
+    io.sockets.emit('boseGetDevicesUpdate', myBoseDevices); // Respond with JSON Object of btnData
   }
 
   // - Change active BOSE System -
@@ -553,7 +567,7 @@ io.on('connection', function(socket){
     var currentObjectIndex = alarmsArr.findIndex(x=> x._id === data[0]); // Find Object where _id equals data.id
     needle.put('http://localhost:3333/api/timer/'+currentObject._id+'?rev='+currentObject._rev+'&active='+data[1], {}, function(err, resp) {
       if (!err) {
-        if(resp.body.hasOwnProperty('updated')) { // Everything went ok
+        if(resp.body.hasOwnProperty('updated') && resp.body.hasOwnProperty('resp')) { // Everything went ok
           console.log("Changed alarm activity of: "+currentObject.name+" to: "+data[1]); // JSON decoding magic. :)
           console.log(resp.body);
           alarmsArr[currentObjectIndex]._rev = resp.body.resp.rev;
@@ -594,4 +608,62 @@ io.on('connection', function(socket){
         console.log("Error changing alarm activity");
       }
     });
+  }
+
+  // -- Delete an alarm --
+  function alarmDelete(data, callback) {
+    needle.delete('http://localhost:3333/api/timer/'+data[0]+'?rev='+data[1], 0, function(err, resp) {
+      var currentObjectIndex = alarmsArr.findIndex(x=> x._id === data[0]); // Find Object where _id equals data.id
+      var cResp = {};
+      cResp.id = data[0];
+      if(currentObjectIndex > -1) {
+        cResp.name = alarmsArr[currentObjectIndex].name;
+      }else{
+        cResp.name = "already deleted";
+      }
+      cResp.success = false;
+      if (!err) {
+        if(!resp.body.hasOwnProperty('error')) { // Everything went ok
+          cResp.success = true;
+          alarmsArr.splice(currentObjectIndex, 1);
+          io.sockets.emit('alarmDeleteStatus', cResp); // Respond with JSON Object of btnData
+          console.log("Deleted alarm: "+cResp.name);
+        }else{
+          io.sockets.emit('alarmDeleteStatus', cResp); // Respond with JSON Object of btnData
+          console.log("Error deleting alarm: "+cResp.name);
+        }
+      }else{ // API couldn't be called
+        io.sockets.emit('alarmDeleteStatus', cResp); // Respond with JSON Object of btnData
+        console.log("Error deleting alarm: "+cResp.name);
+      }
+    });
+  }
+
+  // -- Delete an alarm --
+  function alarmEdit(data, callback) {
+    // var currentObject = alarmsArr.find(x=> x._id === data[0]); // Find Object where _id equals data.id
+    // var currentObjectIndex = alarmsArr.findIndex(x=> x._id === data[0]); // Find Object where _id equals data.id
+    // needle.post('http://localhost:3333/api/timer', data, function(err, resp) {
+    //   if (!err) {
+    //     var myNewAlarm = {}; // Add the new alarm to the alarms
+    //     myNewAlarm.name = resp.body.data.name;
+    //     myNewAlarm.time = resp.body.data.time;
+    //     myNewAlarm.days = resp.body.data.days;
+    //     myNewAlarm.active= resp.body.data.active;
+    //     myNewAlarm.device= resp.body.data.device;
+    //     myNewAlarm._id= resp.body.body.id;
+    //     myNewAlarm._rev= resp.body.rev;
+    //     alarmsArr.push(myNewAlarm);
+    //     io.sockets.emit('alarmSavedStatus', myNewAlarm); // Respond with JSON Object of btnData
+    //     console.log(resp);
+    //   }else{ // API couldn't be called
+    //     //
+    //     console.log("Error changing alarm activity");
+    //   }
+    // });
+  }
+
+  // -- Get all current alarms --
+  function getAlarms(data, callback) {
+    loadAlarms();
   }

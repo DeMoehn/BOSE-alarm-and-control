@@ -1,12 +1,12 @@
 var socket = io.connect(); // Create connection to node.js socket
+var activeBoseSystems = Array();
 
 $(document).ready(function() { // Start when document is ready
-  socket.emit('alarmActiveState', ""); // Send event to Server
-  socket.emit('boseGetSystem', ""); // Ask Server for current active System
+  socket.emit('boseGetDevices', ""); // Ask Server for all known devices
 
   // - User actions -
   // -- Change alarm activity --
-  $('.switch-input').click(function(){ // Handle Event of Bose Preset Button click
+  $(document).on('click', '.switch-input', function(){ // Handle Event of Bose Preset Button click
     if($(this).prop("id") != "alarmsactive") { // PLease don't care about the switch from the "create new"-Field!
       var id = $(this).prop("id");
       var value = $(this).prop("checked");
@@ -15,7 +15,7 @@ $(document).ready(function() { // Start when document is ready
   });
 
   // -- Save a new alarm --
-  $('#alarmsave').click(function(){ // Handle Event of creating a new alarm
+  $(document).on('click', '#alarmsave', function(){
     var newAlarm = {};
     newAlarm.name = $('.alarmname').val();
     newAlarm.time = $('.alarmtime').val();
@@ -35,11 +35,63 @@ $(document).ready(function() { // Start when document is ready
     newAlarm.days = $('[name="alarmdays"]').val().split(",");
     newAlarm.active = $('.alarmactive').prop("checked");
     newAlarm.device = $('#alarmdevice').val();
-    alert(JSON.stringify(newAlarm));
     socket.emit('alarmSaved', newAlarm); // Send event to Server
   });
 
+  // -- Edit an alarm --
+  $(document).on('click', '.editbtn', function(){
+    var alarmID = $(this).data("id");
+    var alarmRev = $(this).data("rev");
+    sendNote("bla", "success");
+    socket.emit('alarmEdit', Array(alarmID, alarmRev)); // Send event to Server
+  });
+
+  // -- Delete an alarm --
+  $(document).on('click', '.deletebtn', function(){
+    var alarmID = $(this).data("id");
+    var alarmRev = $(this).data("rev");
+    socket.emit('alarmDelete', Array(alarmID, alarmRev)); // Send event to Server
+  });
+
   // - Socket Responses -
+  // -- Get and display all alarms --
+  var alarmSample0 = $('.alarm tr:first').clone(); // Clones the first <tr>
+  socket.on('getAlarmsStatus', function(data) {
+    console.log(data.length);
+    if(data.length > 0) {
+      $('.alarm').html(alarmSample0);
+      console.log(data);
+      data.forEach(function(alarm) { // For each Group
+        var alarmSample = alarmSample0.clone();
+        alarmSample.attr('id', "alarm_"+alarm._id);
+        alarmSample.css('display', "block");
+        alarmSample.find('.alarmTime').html(alarm.time+" Uhr"); // Makes changes on this element
+        alarmSample.find('.alarmName').html(alarm.name+" - ");
+        alarmSample.find('.alarmDays').html(alarm.days.join(', '));
+        Array.prototype.filterObjects = function(key, value) {
+            return this.filter(function(x) { return x[key] === value; })
+        }
+        var currentObject = activeBoseSystems.filterObjects("MAC", alarm.device);
+        console.log(currentObject);
+        alarmSample.find('.alarmDevice').html(currentObject[0].name);
+        alarmSample.find('.switch-input').attr('id', alarm._id);
+        alarmSample.find('.switch-input').attr('data-rev', alarm._rev);
+        alarmSample.find('.editbtn').attr('data-id', alarm._id);
+        alarmSample.find('.editbtn').attr('data-rev', alarm._rev);
+        alarmSample.find('.deletebtn').attr('data-id', alarm._id);
+        alarmSample.find('.deletebtn').attr('data-rev', alarm._rev);
+        if(alarm.active === "true") {
+          alarmSample.find('.switch-input').prop('checked', true);
+        }else{
+          alarmSample.find('.switch-input').prop('checked', false);
+        }
+        $('.alarm').append(alarmSample);
+      });
+    }else{
+      $('.alarm').append('Currently no alarms set!'); // Show if no alarms are set
+    }
+  });
+
   // -- Status of alarm active  --
   socket.on('alarmActiveStateStatus', function(data) { // Listen for event "alarmActiveStateStatus"
     data.forEach(function(alarm) { // For each Group
@@ -53,29 +105,82 @@ $(document).ready(function() { // Start when document is ready
 
   // -- Status from alarm activity change --
   socket.on('alarmActiveChangedStatus', function(data) { // Listen for event "alarmActiveChangedStatus"
-    console.log(data); // TODO: Show popup or something if data has "updated" or "error"
+    if(data.hasOwnProperty('resp')) { // Everything went ok
+      if(data.resp.ok = true) {
+        if(data.data.active === "true") {
+          sendNote("Alarm '"+data.data.name+"' changed to: active", "success");
+        }else{
+          sendNote("Alarm '"+data.data.name+"' changed to: inactive", "success");
+        }
+      }else{
+        sendNote("Alarm activity could not be changed", "alert");
+      }
+    }else{
+      sendNote("Alarm activity could not be changed", "alert");
+    }
   });
 
   // -- Ask for active System (for Dropdown)--
-  socket.on('boseGetSystemUpdate', function(data) { // Listen for event "btnActionPressedStatus"
-    if(data !== "none") { // There is a system
-      if(activeBoseSystem !== "none") {
-        $('#'+activeBoseSystem).css("background-color", "");
-      }
-      $('#'+data).css("background-color", "#449d48");
-      activeBoseSystem = data; // Change to new Bose System
-      socket.emit('boseWhatsPlaying', ""); // Ask Server for current Song
-      socket.emit('boseGetVolume', ""); // Ask Server for current volume
-    }else{
-      $('.boseArt').html('No Bose System active');
-    }
+  socket.on('boseGetDevicesUpdate', function(data) { // Listen for event "btnActionPressedStatus"
+    activeBoseSystems = data;
+    data.forEach(function(device) { // For each Group
+      $('#alarmdevice').append( new Option(device.name,device.MAC) );
+    });
+    socket.emit('getAlarms', ""); // Ask for all alarms (in here: because we need the BOSE systems)
   });
 
   // -- React to a new saved alarm --
   socket.on('alarmSavedStatus', function(data) {
-    $('.alarm tr:last').after('<tr><td width="300px"><div class="alarmInfo"><div class="alarmTime">'+data.time+' Uhr</div><div class="alarmName">'+data.name+' - </div><div class="alarmDays">'+data.days+'</div></div></td><td><div class="switch"><label class="switch"><input class="switch-input" type="checkbox" id="'+data._id+'" data-rev="'+data._rev+'" checked/><span class="switch-label" data-on="On" data-off="Off"></span><span class="switch-handle"></span></label></div></td></tr>');
+    socket.emit('getAlarms', ""); // Refresh all alarms
+  });
+
+  // -- React to a new saved alarm --
+  socket.on('alarmDeleteStatus', function(data) {
+    if(data.success) {
+      sendNote("Alarm: "+data.name+" deleted!", "success");
+      $('#alarm_'+data.id).remove();
+    }else{
+      sendNote("Couldn't delete alarm: "+data.name, "error");
+    }
   });
 
   // - Create Day Picker -
   $("#alarmdays").multiPicker({ selector : "li" });
+  $("#alarmpresets").multiPicker({ selector : "li", isSingle: true });
+
+
+  // - Notifications -
+  $.noty.defaults = {
+    layout: 'topRight',
+    theme: 'relax', // or 'relax'
+    dismissQueue: true, // If you want to use queue feature set this true
+    template: '<div class="noty_message"><span class="noty_text"></span><div class="noty_close"></div></div>',
+    animation: {
+        open: {height: 'toggle'}, // or Animate.css class names like: 'animated bounceInLeft'
+        close: {height: 'toggle'}, // or Animate.css class names like: 'animated bounceOutLeft'
+        easing: 'swing',
+        speed: 300 // opening & closing animation speed
+    },
+    timeout: 2000, // delay for closing event. Set false for sticky notifications
+    force: false, // adds notification to the beginning of queue when set to true
+    modal: false,
+    maxVisible: 8, // you can set max visible notification for dismissQueue true option,
+    killer: false, // for close all notifications before show
+    closeWith: ['click'], // ['click', 'button', 'hover', 'backdrop'] // backdrop click will close all notifications
+    callback: {
+        onShow: function() {},
+        afterShow: function() {},
+        onClose: function() {},
+        afterClose: function() {},
+        onCloseClick: function() {},
+    },
+    buttons: false // an array of buttons
+  };
+
+  function sendNote(nText, nType) {
+    var n = noty({
+        text: nText,
+        type: nType, // alert - success - error - warning - information - confirmation
+    });
+  }
 });

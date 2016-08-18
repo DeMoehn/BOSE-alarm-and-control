@@ -9,6 +9,8 @@
 var express = require('express'); // Include Express
 var app = express(); // Define our app using express
 var bodyParser = require('body-parser');
+var mdns = require('mdns'); // MDNS Tool to discover devices
+var needle = require('needle'); // HTTP Handler
 
 // - Database -
 var nano = require('nano')('https://demoehn:a11HQSM54!!@demoehn.cloudant.com'); // Connect to CouchDB
@@ -26,11 +28,13 @@ app.use(bodyParser.json());
 // - Configure Variables -
 var port = process.env.PORT || 3333; // Set the port
 var runningAlarms = Array(); // Create an Array for all running alarms
+var myBoseDevices = Array();
 
 // -----------------------
 // - Startup Functions -
 // -----------------------
-initializeAlarms(); // Load all saved alarms from DB
+initializeAlarms(); // Creates the alarms
+var boseSystemsLoaded = false; // Indicates that now systems are found by now
 var alarmInterval = setInterval(checkTime, 55000); // Start the Alarm - Interval (55sec)
 
 
@@ -60,6 +64,8 @@ router.route('/timer').post(function(req, res) {
 
     db.insert(data, function(err, body, header) { // Insert Object to DB
       if (!err) {
+        data._id = body.id;
+        data._rev = body.rev;
         setAlarm(data);
         res.json({ok: true, data: data, body: body}); // Respond with data
       }else{
@@ -223,8 +229,8 @@ router.route('/timer/:timer_id').put(function(req, res) {
             db.insert(myAlarm, function(err2, body2) {
               if (!err) {
                 res.json({updated: true, timer: req.params.timer_id, rev: rev, data: myAlarm, old: oldBody, resp: body2});
-
                 var currentAlarmIndex = runningAlarms.findIndex(x => x.id === req.params.timer_id); // Find the current running timer Index
+                console.log("Alarm edited!");
                 runningAlarms.splice(currentAlarmIndex, 1); // Remove the Alarm
                 setAlarm(myAlarm);
               }else{
@@ -248,10 +254,19 @@ router.route('/timer/:timer_id').delete(function(req, res) {
   }else{
     db.destroy(req.params.timer_id, rev, function(err, body) { // Delete object by ID and Rev
       if (!err) {
-        var currentAlarmIndex = runningAlarms.findIndex(x => x.id === req.params.timer_id); // Find the current running timer Index
-        runningAlarms.splice(currentAlarmIndex, 1); // Remove & Stop the Alarm
-
-        res.json({deleted: true, timer: req.params.timer_id, rev: rev, data: body});
+        var currentAlarmIndex = runningAlarms.findIndex(x => x._id === req.params.timer_id); // Find the current running timer Index
+        if(currentAlarmIndex > -1) {
+          res.json({deleted: true, timer: req.params.timer_id, rev: rev, data: body});
+          console.log("Alarm deleted: "+runningAlarms[currentAlarmIndex].name);
+          runningAlarms.splice(currentAlarmIndex, 1); // Remove & Stop the Alarm
+        }else{
+          res.json({error: true, desc: err, timer: req.params.timer_id, rev: rev});
+          console.log("Crazy error!");
+          console.log(currentAlarmIndex);
+          console.log(runningAlarms);
+          console.log(req.params.timer_id);
+          console.log(rev);
+        }
       }else{
         res.json({error: true, desc: err, timer: req.params.timer_id, rev: rev});
       }
@@ -302,21 +317,33 @@ function setAlarm(data) {
   var newAlarm = {}; // Create a new Alarm Object
   newAlarm = data;
   runningAlarms.push(newAlarm);
-  console.log("Started Alarm: "+data.name);
+  try {
+    var currentObject = myBoseDevices.find(x=> x.MAC === data.device); // Find Object where _id equals data.id
+  } catch (err) {
+    console.log(err);
+    initializeAlarms();
+    currentObject.name = "error, retry";
+  }
+  console.log("Started Alarm: "+data.name+" ("+data.time+", "+data.days.join(", ")+") for device: "+currentObject.name);
 }
 
 // - Initialize Alarms -
 function initializeAlarms() { // Reload all alarms from DB on startup
-  db.view('alarms', 'show', function(err, body) { // Load a view that displays all alarms
-    if (!err) {
-      body.rows.forEach(function(alarm) {
-        alarm = alarm.value;
-        setAlarm(alarm);
-      });
-    }else{
-      console.log("ERROR! Could not start alarms! - "+err);
-    }
-  });
+  runningAlarms = [];
+  if(boseSystemsLoaded) {
+    db.view('alarms', 'show', function(err, body) { // Load a view that displays all alarms
+      if (!err) {
+        body.rows.forEach(function(alarm) {
+          alarm = alarm.value;
+          setAlarm(alarm);
+        });
+      }else{
+        console.log("ERROR! Could not start alarms! - "+err);
+      }
+    });
+  }else{
+    setTimeout(initializeAlarms, 500);
+  }
 }
 
 // - Check the time -
@@ -335,16 +362,17 @@ function checkTime() {
       var alarmMinute= alarm.time.split(":")[1];
 
       if(alarm.active === "true") {
-        if( (alarmDays.indexOf(currentDay) > -1) && (currentHour == alarmHour) && (currentMinute == alarmMinute) ) {
+        if( (alarmDays.indexOf(currentDay.toString()) > -1) && (currentHour == alarmHour) && (currentMinute == alarmMinute) ) {
           console.log("ALARM! Alarm: "+alarm.name+" is met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute);
-          startBose("PRESET_5");
-          boseVolume(20);
-          startBose("SHUFFLE_ON");
+          var currentObject = myBoseDevices.find(x=> x.MAC === alarm.device); // Find Object where _id equals data.id
+          startBose("PRESET_5", currentObject);
+          boseVolume(20, currentObject);
+          startBose("SHUFFLE_ON", currentObject);
         }else{
-          if(alarmDays.indexOf(currentDay) > -1) {
+          if(alarmDays.indexOf(currentDay.toString()) > -1) {
             console.log("Alarm: "+alarm.name+" is running. Day met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute);
           }else{
-            console.log("Alarm: "+alarm.name+" is running. Day not met! Days: "+alarm.days);
+            console.log("Alarm: "+alarm.name+" is running. Day not met! Days: "+alarm.days+" - current day: "+currentDay);
           }
         }
       }else{
@@ -374,16 +402,56 @@ function execCMD(cmd, url, endpoint) {
 }
 
 // - Send Key -
-function startBose(key) {
-  var url = '192.168.1.27:8090'; // 192.168.0.153 - 135 (office)
+function startBose(key, alarm) {
+  var url = alarm.ip+':'+alarm.cmdPort;
   var cmdP = '<key state="press" sender="Gabbo">'+key+'</key>';
   var cmdR = '<key state="release" sender="Gabbo">'+key+'</key>';
   execCMD(cmdP, url, "key");
   execCMD(cmdR, url, "key");
 }
 
-function boseVolume(vol) {
-  var url = '192.168.0.153:8090'; // 192.168.0.153 - 135 (office)
+function boseVolume(vol, alarm) {
+  var url = alarm.ip+':'+alarm.cmdPort;
   var cmdV = '<volume>'+vol+'</volume>';
   execCMD(cmdV, url, "volume");
 }
+
+// - Watch and recieve devices -
+// -- Watch all http servers --
+var sequence = [
+    mdns.rst.DNSServiceResolve(),
+    'DNSServiceGetAddrInfo' in mdns.dns_sd ? mdns.rst.DNSServiceGetAddrInfo() : mdns.rst.getaddrinfo({families:[0]}),
+    mdns.rst.makeAddressesUnique()
+];
+var browser = mdns.createBrowser(mdns.tcp('soundtouch'), {resolverSequence: sequence});
+
+// -- Read broadcasting devices and save them --
+browser.on('serviceUp', function(service) {
+  var newDevice = {};
+  newDevice.name = service.name;
+  newDevice.ip = service.addresses[0]
+  newDevice.cmdPort = service.port; // Command Port
+  newDevice.wsPort = '8080'; // WebSocket Port
+  newDevice.MAC = service.txtRecord.MAC;
+
+  var sendUrl = 'http://'+newDevice.ip+":"+newDevice.cmdPort+'/info';
+  needle.get(sendUrl, function(error, response) {
+    if (!error && response.statusCode == 200) {
+      console.log("Successfully asked: "+newDevice.name+" for information.");
+      newDevice.type = response.body.info.type;
+      newDevice.Account = response.body.info.margeAccountUUID;
+      console.log("Found service: "+service.name+" - IP: "+service.addresses[0]+":"+service.port+" - MAC: "+service.txtRecord.MAC);
+      myBoseDevices.push(newDevice);
+      boseSystemsLoaded = true;
+    }else{
+      console.log("Error asking: "+newDevice.name+" for information. No device saved!");
+    }
+  });
+});
+
+// -- Listen to devices that go down --
+browser.on('serviceDown', function(service) {
+  console.log(service);
+  // TODO: Remove device from myBoseDevices
+});
+browser.start();

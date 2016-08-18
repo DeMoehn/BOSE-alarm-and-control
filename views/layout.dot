@@ -48,10 +48,12 @@
     <link href="/css/glyphicon.css" rel="stylesheet">
     <link href="/css/multipicker.css" rel="stylesheet">
     <!-- Scripts -->
-    <script src="src/jquery-2.2.4.min.js"></script>
+    <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
     <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
     <script src="js/navbar.js"></script>
     <script src="js/multipicker.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="src/noty/packaged/jquery.noty.packaged.min.js"></script>
   </head>
 
   <body role="document">

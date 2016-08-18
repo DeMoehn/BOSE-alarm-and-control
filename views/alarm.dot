@@ -10,26 +10,29 @@
         <div class="panel-body">
           <div class="boseContent">
             <table class="alarm">
-              {{~it.items :value:index}}
-                <tr>
-                  <td width="300px">
-                    <div class="alarmInfo">
-                      <div class="alarmTime">{{=value.time}} Uhr</div>
-                      <div class="alarmName">{{=value.name}} - </div>
-                      <div class="alarmDays">{{=value.days}}</div>
-                    </div>
-                  </td>
-                  <td>
-                    <div class="switch">
-                      <label class="switch">
-                        <input class="switch-input" type="checkbox" id="{{=value._id}}" data-rev="{{=value._rev}}" checked/>
-                        <span class="switch-label" data-on="On" data-off="Off"></span>
-                        <span class="switch-handle"></span>
-                      </label>
-                    </div>
-                  </td>
-                </tr>
-              {{~}}
+              <tr id="alarm_<=value._id>" class="eachAlarm" style="display:none">
+                <td width="250px">
+                  <div class="alarmInfo">
+                    <div class="alarmTime"><=value.time> Uhr</div>
+                    <div class="alarmName"><=value.name> - </div>
+                    <div class="alarmDays"><=value.days></div><br />
+                    <div class="alarmDevice"><=value.device></div>
+                  </div>
+                </td>
+                <td width="100px">
+                  <div class="switch">
+                    <label class="switch">
+                      <input class="switch-input" type="checkbox" id="<=value._id>" data-rev="<=value._rev>" checked/>
+                      <span class="switch-label" data-on="On" data-off="Off"></span>
+                      <span class="switch-handle"></span>
+                    </label>
+                  </div>
+                </td>
+                <td width="100px">
+                  <button type="button" class="btn editbtn" id="editalarm" data-id="<=value._id>"  data-rev="<=value._rev>"></button>
+                  <button type="button" class="btn deletebtn" id="deletealarm" data-id="<=value._id>"  data-rev="<=value._rev>"></button>
+                </td>
+              </tr>
             </table>
           </div>
         </div>
@@ -60,6 +63,19 @@
                 </ul>
               </td>
             </tr>
+            <tr class="unselectable">
+              <td class="alarm_left_td">Preset:</td>
+              <td>
+                <ul id="alarmpresets" class="unselectable">
+                  <li>1</li>
+                  <li>2</li>
+                  <li>3</li>
+                  <li>4</li>
+                  <li>5</li>
+                  <li>6</li>
+                </ul>
+              </td>
+            </tr>
             <tr>
               <td class="alarm_left_td">Active:</td>
               <td>
@@ -76,11 +92,6 @@
               <td class="alarm_left_td">Device:</td>
               <td>
                 <select name="top5" class="select" id="alarmdevice">
-                  <option>Heino</option>
-                  <option>Michael Jackson</option>
-                  <option>Tom Waits</option>
-                  <option>Nina Hagen</option>
-                  <option>Marianne Rosenberg</option>
                 </select>
               </td>
             </tr>
