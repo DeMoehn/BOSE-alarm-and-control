@@ -38,7 +38,7 @@
         </div>
       </div>
       <div class="panel">
-        <div class="panel-heading"><p>Create new Alarm</p></div>
+        <div class="panel-heading" id="newalarm"><p>Create new Alarm</p></div>
         <div class="panel-body">
           <table class="alarmCreateTable">
             <tr>

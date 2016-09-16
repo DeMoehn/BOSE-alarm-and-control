@@ -1,0 +1,8 @@
+{
+  "views": {
+    "show": {
+      "map": "function (doc) {\n  if(doc.type == \"alarm\") {\n    emit(doc._id, doc);\n  }\n}"
+    }
+  },
+  "language": "javascript"
+}

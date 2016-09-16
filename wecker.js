@@ -1,9 +1,11 @@
 // jshint esversion: 6
-
-
 // ---------------------------------
 // - Require & Variables Setup -
 // --------------------------------
+
+// - CONFIG starts here! -
+var couchdbIP = '192.168.1.220';
+// - CONFIG ends here! -
 
 // - Webserver -
 var express = require('express'); // Include Express
@@ -13,7 +15,7 @@ var mdns = require('mdns'); // MDNS Tool to discover devices
 var needle = require('needle'); // HTTP Handler
 
 // - Database -
-var nano = require('nano')('https://demoehn:a11HQSM54!!@demoehn.cloudant.com'); // Connect to CouchDB
+var nano = require('nano')('http://'+couchdbIP+':5984'); // Connect to CouchDB on the PI
 var db = nano.use('bosealarms'); // Connect to Database
 
 // - Shell Scripts -
@@ -55,12 +57,17 @@ router.use(function(req, res, next) {
 router.route('/timer').post(function(req, res) {
   if(req.body.time !== undefined && req.body.days !== undefined && req.body.name !== undefined && req.body.active !== undefined && req.body.device !== undefined) { // If all needed Parameters are set
     var data = {}; // Create new object
-    data.type = "alarm";
-    data.name = req.body.name;
-    data.time = req.body.time;
-    data.days = req.body.days;
-    data.active = req.body.active;
-    data.device = req.body.device;
+    data.type = "alarm"; // Type is alarm
+    data.name = req.body.name; // Alarm Name
+    data.time = req.body.time; // Alarm time
+    data.days = req.body.days; // Alarm days
+    data.active = req.body.active; // Active or inactive
+    data.device = req.body.device; // Which device
+    if(req.body.time !== undefined) { // Use standard preset or custom
+      data.preset = req.body.preset;
+    }else{
+      data.preset = 1;
+    }
 
     db.insert(data, function(err, body, header) { // Insert Object to DB
       if (!err) {
@@ -85,8 +92,8 @@ router.route('/timer').get(function(req, res) {
   db.view('alarms', 'show', function(err, body) { // Load a view that displays all alarms
     if (!err) {
       body.rows.forEach(function(alarm) {
-        alarmsArr.push(alarm.value); // Add all alarms to the array
-        alarmsCount++;
+        alarmsArr.push(alarm.value); // Add each alarm to the array
+        alarmsCount++; // Count each alarm
       });
       res.json({ok:true, count: alarmsCount, alarms: alarmsArr}); // Respond with alarms
     }else{
@@ -224,6 +231,13 @@ router.route('/timer/:timer_id').put(function(req, res) {
             if(req.query.active !== undefined) {
               myAlarm.active = req.query.active;
             }
+            if(req.query.device !== undefined) {
+              myAlarm.device = req.query.device;
+            }
+            if(req.query.preset !== undefined) {
+              myAlarm.preset = req.query.preset;
+            }
+
 
             // Insert / Update the new object
             db.insert(myAlarm, function(err2, body2) {

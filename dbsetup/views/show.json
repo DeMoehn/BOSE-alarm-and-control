@@ -1,0 +1,14 @@
+{
+  "views": {
+    "btns": {
+      "map": "function(doc) {\n    if(doc.type == \"button\") {\n      if(typeof doc.commandtype == 'undefined') {\n        cType = \"NONE\";\n      }else{\n        cType = doc.commandtype;\n      }\n        emit(doc.groupid, doc);\n    }\n}"
+    },
+    "groups": {
+      "map": "function(doc) {\n    if(doc.type == \"group\") {\n        emit(doc._id, doc.name);\n    }\n}"
+    },
+    "bose": {
+      "map": "function (doc) {\n  if(doc.commandtype == \"BOSE\") {\n    emit(doc._id, doc);\n  }\n}"
+    }
+  },
+  "language": "javascript"
+}

@@ -138,11 +138,14 @@
 		this.prePopulate = function () {
 			if (MultiPicker.isArray(this.options.prePopulate) && this.options.prePopulate.length) {
 				for (var key in this.options.prePopulate) {
+					console.log(key);
 					var searched = this.options.prePopulate[key];
 					var element = this.getElementSelector(searched);
 
 					if ($(element).index() < 0) {
 						console.warn("Multipicker: prepopulated element doesn`t found `%s`", searched);
+						console.warn($(element).index());
+						console.warn(element);
 					} else {
 						this.select.call(element, this, true);
 					}

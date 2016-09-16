@@ -3,6 +3,10 @@
 // - Require & Variables Setup -
 // --------------------------------
 
+// - CONFIG starts here! -
+var couchdbIP = '192.168.1.220';
+// - CONFIG ends here! -
+
 // - Webserver & Socket IO -
 var express = require('express'); // Web - Framework
 var doT = require('express-dot'); // Templating
@@ -24,7 +28,7 @@ var sys = require('sys');
 var exec = require('child_process').exec;
 
 // - Database -
-var nano = require('nano')('https://demoehn:a11HQSM54!!@demoehn.cloudant.com'); // Connect to CouchDB
+var nano = require('nano')('http://'+couchdbIP+':5984'); // Connect to CouchDB on the PI
 var db = nano.use('homeautomation'); // Connect to Database
 
 // - Define Variables -
@@ -641,26 +645,13 @@ io.on('connection', function(socket){
 
   // -- Delete an alarm --
   function alarmEdit(data, callback) {
-    // var currentObject = alarmsArr.find(x=> x._id === data[0]); // Find Object where _id equals data.id
-    // var currentObjectIndex = alarmsArr.findIndex(x=> x._id === data[0]); // Find Object where _id equals data.id
-    // needle.post('http://localhost:3333/api/timer', data, function(err, resp) {
-    //   if (!err) {
-    //     var myNewAlarm = {}; // Add the new alarm to the alarms
-    //     myNewAlarm.name = resp.body.data.name;
-    //     myNewAlarm.time = resp.body.data.time;
-    //     myNewAlarm.days = resp.body.data.days;
-    //     myNewAlarm.active= resp.body.data.active;
-    //     myNewAlarm.device= resp.body.data.device;
-    //     myNewAlarm._id= resp.body.body.id;
-    //     myNewAlarm._rev= resp.body.rev;
-    //     alarmsArr.push(myNewAlarm);
-    //     io.sockets.emit('alarmSavedStatus', myNewAlarm); // Respond with JSON Object of btnData
-    //     console.log(resp);
-    //   }else{ // API couldn't be called
-    //     //
-    //     console.log("Error changing alarm activity");
-    //   }
-    // });
+    needle.get('http://localhost:3333/api/timer/'+data[0], function(err, resp) {
+      if (!err) {
+        io.sockets.emit('alarmEditStatus', resp.body); // Respond with JSON Object of btnData
+      }else{ // API couldn't be called
+        console.log("Error changing alarm activity");
+      }
+    });
   }
 
   // -- Get all current alarms --

@@ -134,7 +134,7 @@ $(document).ready(function() { // Start when document is ready
     socket.emit('getAlarms', ""); // Refresh all alarms
   });
 
-  // -- React to a new saved alarm --
+  // -- React to deleted alarm --
   socket.on('alarmDeleteStatus', function(data) {
     if(data.success) {
       sendNote("Alarm: "+data.name+" deleted!", "success");
@@ -144,9 +144,23 @@ $(document).ready(function() { // Start when document is ready
     }
   });
 
+  // -- React to edit request alarm --
+  socket.on('alarmEditStatus', function(data) {
+    console.log(data);
+    $('#newalarm').html('Edit alarm: '+data.data.name);
+    $('.alarmname').val(data.data.name);
+    $('.alarmtime').val(data.data.time);
+
+    $("#alarmdays").multiPicker({ selector : "li", prePopulate : data.data.days });
+    console.warn(data.data.days);
+
+    $("#alarmpresets").multiPicker({ selector : "li", prePopulate : (data.data.preset -1) });
+    sendNote("Alarm ready to edit", "alert");
+  });
+
   // - Create Day Picker -
   $("#alarmdays").multiPicker({ selector : "li" });
-  $("#alarmpresets").multiPicker({ selector : "li", isSingle: true });
+  $("#alarmpresets").multiPicker({ selector : "radio", isSingle: true });
 
 
   // - Notifications -
