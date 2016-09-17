@@ -61,8 +61,9 @@ $(document).ready(function() { // Start when document is ready
 
   // - Socket Responses -
   // -- Get and display all alarms --
-  var alarmSample0 = $('.alarm .eachAlarm').clone(); // Clones the first <tr>
+  var alarmSample0 = $('.alarm .eachAlarm').first().clone(); // Clones the first <tr>
   socket.on('getAlarmsStatus', function(data) {
+    $('.alarm').html("");
     if(data.length > 0) {
       console.log(alarmSample0);
       data.forEach(function(alarm) { // For each Group
