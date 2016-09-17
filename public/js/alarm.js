@@ -33,6 +33,7 @@ $(document).ready(function() { // Start when document is ready
     }
     newAlarm.time = timeToSave;
     newAlarm.days = $('[name="alarmdays"]').val().split(",");
+    newAlarm.preset = parseInt($('[name="alarmpresets"]').val())+1;
     newAlarm.active = $('.alarmactive').prop("checked");
     newAlarm.device = $('#alarmdevice').val();
     socket.emit('alarmSaved', newAlarm); // Send event to Server
@@ -72,8 +73,7 @@ $(document).ready(function() { // Start when document is ready
             return this.filter(function(x) { return x[key] === value; })
         }
         var currentObject = activeBoseSystems.filterObjects("MAC", alarm.device);
-        console.log(currentObject);
-        alarmSample.find('.alarmDevice').html(currentObject[0].name);
+        alarmSample.find('.alarmDevice').html(currentObject[0].name+" (Preset: "+alarm.preset+")");
         alarmSample.find('.switch-input').attr('id', alarm._id);
         alarmSample.find('.switch-input').attr('data-rev', alarm._rev);
         alarmSample.find('.editbtn').attr('data-id', alarm._id);
@@ -160,7 +160,7 @@ $(document).ready(function() { // Start when document is ready
 
   // - Create Day Picker -
   $("#alarmdays").multiPicker({ selector : "li" });
-  $("#alarmpresets").multiPicker({ selector : "radio", isSingle: true });
+  $("#alarmpresets").multiPicker({ selector : "li", isSingle: true });
 
 
   // - Notifications -

@@ -16,7 +16,7 @@
                     <div class="alarmTime"><=value.time> Uhr</div>
                     <div class="alarmName"><=value.name> - </div>
                     <div class="alarmDays"><=value.days></div><br />
-                    <div class="alarmDevice"><=value.device></div>
+                    <div class="alarmDevice"><=value.device> (<=value.preset>)</div>
                   </div>
                 </td>
                 <td width="100px">

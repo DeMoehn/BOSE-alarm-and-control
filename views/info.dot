@@ -4,9 +4,11 @@
     <div>
       <div class="panel-heading"><p>Information</p></div>
       <div class="panel-body">
-        <div class="row">
+        <div class="row" style="padding: 5px;">
           <p><b>Created by: </b>Sebastian Möhn</p>
           <p><b>Date: </b>September, 2016</p>
+          <p><b>License: </b>MIT</p>
+          <p><b>Github: </b><a style="color:#333" href="https://github.com/DeMoehn/RaPi-Smarthome">https://github.com/DeMoehn/RaPi-Smarthome</a></p>
         </div>
       </div>
     </div>

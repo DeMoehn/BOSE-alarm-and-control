@@ -1,7 +1,10 @@
 {
-  "name": "DeMoehn_Homeautomation",
-  "version": "0.0.2",
-  "description": "Applikation for Homeautomation",
+  "name": "DeMoehn_SoundTouch&Home Automation",
+  "email" : "sebastian.moehn@gmail.com",
+  "version": "0.1.2",
+  "description": "Applikation for Bose SoundTouch devices and 433MHZ devices",
+  "main": "app.js",
+  "license": "MIT",
   "dependencies": {
     "compression": "*",
     "dot": "^1.0.2",

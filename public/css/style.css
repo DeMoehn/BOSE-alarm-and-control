@@ -18,7 +18,7 @@ body {
 }
 
 /* - Links - */
-a {
+body a {
   text-decoration: underline dotted;
   color: #333;
 }

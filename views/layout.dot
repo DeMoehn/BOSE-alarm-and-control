@@ -45,10 +45,6 @@
               rel="apple-touch-startup-image">
     <!-- Title -->
     <title>SoundTouch&Home Automation</title>
-    <!-- CSS -->
-    <link href="/css/style.css" rel="stylesheet">
-    <link href="/css/glyphicon.css" rel="stylesheet">
-    <link href="/css/multipicker.css" rel="stylesheet">
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-2.2.4.min.js" integrity="sha256-BbhdlvQf/xTY9gja0Dq3HiwQF8LaCRTXxZKRutelT44=" crossorigin="anonymous"></script>
     <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
@@ -56,6 +52,11 @@
     <script src="js/multipicker.js"></script>
     <script src="js/layout.js"></script>
     <script src="src/noty/packaged/jquery.noty.packaged.min.js"></script>
+    <script src="src/bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
+    <!-- CSS -->
+    <link href="/css/glyphicon.css" rel="stylesheet">
+    <link href="/css/multipicker.css" rel="stylesheet">
+    <link href="/css/style.css" rel="stylesheet">
   </head>
 
   <body role="document">
@@ -75,8 +76,5 @@
 
     <!-- Dynamic Body -->
     {{=it.body}}
-
-    <!-- Bootstrap core JavaScript, placed at the end of the document so the pages load faster -->
-    <script src="src/bootstrap-3.3.6-dist/js/bootstrap.min.js"></script>
   </body>
 </html>

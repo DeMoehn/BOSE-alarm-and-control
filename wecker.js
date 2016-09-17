@@ -47,7 +47,7 @@ var router = express.Router(); // Get an instance of the express Router
 
 // - Middleware to use for all requests -
 router.use(function(req, res, next) {
-    console.log('Something is happening.'); // Do some logging
+    console.log('User interaction '+req.method+": "+req.url); // Do some logging
     next(); // Make sure we go to the next routes and don't stop here
 });
 
@@ -63,7 +63,7 @@ router.route('/timer').post(function(req, res) {
     data.days = req.body.days; // Alarm days
     data.active = req.body.active; // Active or inactive
     data.device = req.body.device; // Which device
-    if(req.body.time !== undefined) { // Use standard preset or custom
+    if(req.body.preset !== undefined) { // Use standard preset or custom
       data.preset = req.body.preset;
     }else{
       data.preset = 1;
@@ -334,11 +334,12 @@ function setAlarm(data) {
   try {
     var currentObject = myBoseDevices.find(x=> x.MAC === data.device); // Find Object where _id equals data.id
   } catch (err) {
+    var currentObject = {};
+    currentObject.name = "error, retry";
     console.log(err);
     initializeAlarms();
-    currentObject.name = "error, retry";
   }
-  console.log("Started Alarm: "+data.name+" ("+data.time+", "+data.days.join(", ")+") for device: "+currentObject.name);
+  console.log("Started Alarm: "+data.name+" (Time: "+data.time+" - Days: "+data.days.join(", ")+" - Preset: "+data.preset+" - Active: "+data.active+") for device: "+currentObject.name);
 }
 
 // - Initialize Alarms -
@@ -374,23 +375,23 @@ function checkTime() {
       var alarmDays = alarm.days;
       var alarmHour = alarm.time.split(":")[0];
       var alarmMinute= alarm.time.split(":")[1];
+      var currentObject = myBoseDevices.find(x=> x.MAC === alarm.device); // Find Object where _id equals data.id
 
       if(alarm.active === "true") {
         if( (alarmDays.indexOf(currentDay.toString()) > -1) && (currentHour == alarmHour) && (currentMinute == alarmMinute) ) {
-          console.log("ALARM! Alarm: "+alarm.name+" is met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute);
-          var currentObject = myBoseDevices.find(x=> x.MAC === alarm.device); // Find Object where _id equals data.id
-          startBose("PRESET_5", currentObject);
+          console.log("ALARM! Alarm: \""+alarm.name+"\" is met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute+" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - D: "+currentObject.name+")");
+          startBose("PRESET_"+alarm.preset, currentObject);
           boseVolume(20, currentObject);
           startBose("SHUFFLE_ON", currentObject);
         }else{
           if(alarmDays.indexOf(currentDay.toString()) > -1) {
-            console.log("Alarm: "+alarm.name+" is running. Day met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute);
+            console.log("Alarm: \""+alarm.name+"\" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - D: "+currentObject.name+") is running. Day met! Time not! - Current time: "+currentHour+":"+currentMinute);
           }else{
-            console.log("Alarm: "+alarm.name+" is running. Day not met! Days: "+alarm.days+" - current day: "+currentDay);
+            console.log("Alarm: \""+alarm.name+"\" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - D: "+currentObject.name+") is running. Day not met! - Current day: "+currentDay);
           }
         }
       }else{
-        console.log("Alarm: "+alarm.name+" is not active");
+        console.log("Alarm: \""+alarm.name+"\" is not active. (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - D: "+currentObject.name+")");
       }
     });
   }

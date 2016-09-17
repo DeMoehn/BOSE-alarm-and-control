@@ -39,5 +39,24 @@ Some private work to create a web-app that can communicate with 433 MHz devices 
 ## Prepare CouchDB
 - Go to the file `config.json` and look for "couchDB" and then "ip": "192.168.1.220"," on line 4
 - Change `ip": "192.168.1.220"` to your couchDB IP address
-- In the "RaPi-Smarthome" Folder, use `chmod +x ./dbsetup/dbsetup.sh` to make the file executable
+- In the "RaPi-Smarthome" Folder, use `sudo chmod +x ./dbsetup/dbsetup.sh` to make the file executable
 - Run `./dbsetup/dbsetup.sh` and follow the installation process
+
+## Download Git & Forever
+- Use `sudo apt-get install git` to install Git on the Raspberry Pi
+- Use `sudo npm install forever -g` to install Forever (https://github.com/foreverjs/forever) on the Raspberry Pi (Keeps scripts running)
+
+## Clone this Repo & Install
+- Use `git clone https://github.com/DeMoehn/RaPi-Smarthome.git` to clone this Git to your Raspberry Pi
+- Change to the repo directory with `cd RaPi-Smarthome`
+- Use `sudo npm install` to install all needed packages
+- Try `node app.js` and check if the application is running
+- Try `node wecker.js` and check if the timer app is running
+
+## Use Crontab & Forever
+- To make the scrips start on reboot I use crontab, to be sure they're restart when crashing I use forever
+- Move the files `alarm-starter.sh` and `app-starter.sh` from the Folder `startup-scripts` to your root folder (where RaPi-Smarthome is located)
+- Make sure the scripts alarm-starter.sh` and `app-starter.sh` are executable (otherwise use `sudo chmod +x alarm-starter.sh` & `sudo chmod +x app-starter.sh`)
+- Use `crontab -e`
+- Now add the lines `@reboot /home/pi/app-starter.sh &` and `@reboot /home/pi/alarm-starter.sh &`
+- Now reboot your Raspberry Pi and see if everything works (use: `sudo reboot -n`)

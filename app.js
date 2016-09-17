@@ -106,7 +106,7 @@ function manageRoute(req, res) {
   });
 }
 
-// - Info route - TODO: Create Info file!
+// - Info route -
 function infoRoute(req, res) {
       res.render('info', {}); // Render and pass variables
 }
@@ -171,6 +171,7 @@ function loadAlarms() {
           newDays.push(newDay);
         });
         myAlarm.days = newDays;
+        myAlarm.preset = alarm.preset;
         alarmsArr.push(myAlarm);
       });
       io.sockets.emit('getAlarmsStatus', alarmsArr); // Respond with JSON Object of btnData
@@ -600,10 +601,11 @@ io.on('connection', function(socket){
         myNewAlarm.name = resp.body.data.name;
         myNewAlarm.time = resp.body.data.time;
         myNewAlarm.days = resp.body.data.days;
-        myNewAlarm.active= resp.body.data.active;
-        myNewAlarm.device= resp.body.data.device;
-        myNewAlarm._id= resp.body.body.id;
-        myNewAlarm._rev= resp.body.rev;
+        myNewAlarm.active = resp.body.data.active;
+        myNewAlarm.device = resp.body.data.device;
+        myNewAlarm.preset = resp.body.data.preset;
+        myNewAlarm._id = resp.body.body.id;
+        myNewAlarm._rev = resp.body.rev;
         alarmsArr.push(myNewAlarm);
         io.sockets.emit('alarmSavedStatus', myNewAlarm); // Respond with JSON Object of btnData
         console.log(resp);
