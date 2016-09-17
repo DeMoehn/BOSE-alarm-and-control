@@ -257,11 +257,19 @@ browser.on('serviceUp', function(service) {
   var sendUrl = 'http://'+newDevice.ip+":"+newDevice.cmdPort+'/info';
   needle.get(sendUrl, function(error, response) {
     if (!error && response.statusCode == 200) {
-      console.log("Successfully asked: "+newDevice.name+" for information.");
       newDevice.type = response.body.info.type;
       newDevice.Account = response.body.info.margeAccountUUID;
-      console.log("Found service: "+service.name+" - IP: "+service.addresses[0]+":"+service.port+" - MAC: "+service.txtRecord.MAC);
-      myBoseDevices.push(newDevice);
+
+      needle.get('http://'+newDevice.ip+":"+newDevice.cmdPort+'/now_playing', function(error, response) {
+        if (!error && response.statusCode == 200) {
+          newDevice.power = response.body.nowPlaying.$.source;
+          myBoseDevices.push(newDevice);
+          console.log("Found service: "+service.name+" ("+newDevice.power+") - IP: "+service.addresses[0]+":"+service.port+" - MAC: "+service.txtRecord.MAC);
+          boseSystemsLoaded = true;
+        }else{
+          console.log("Error getting additional info");
+        }
+      });
     }else{
       console.log("Error asking: "+newDevice.name+" for information. No device saved!");
     }
@@ -330,13 +338,20 @@ function listenToData(data) {
 function handleBoseData(cString, type) {
   var boseInfo = { };
   var stopSending = false; // Prevent from sending
-
-  console.log("!!!!!Getting Data to handle!");
-  console.log(cString);
-  console.log(type);
   // Normalize data from Update Info or Requested Info
+  boseInfo.device = "none";
+  if(cString.hasOwnProperty('updates')) {
+    boseInfo.device = cString.updates.$.deviceID;
+  }else if(cString.hasOwnProperty('nowPlaying')) {
+    boseInfo.device = cString.nowPlaying.$.deviceID;
+  }else if(cString.hasOwnProperty('volume')) {
+    boseInfo.device = cString.volume.$.deviceID;
+  }else{
+    console.log("DEVICE not found...");
+    console.log(cString);
+  }
   if(type == "update") { // It's Update Information
-    console.log("-- Song updated! --");
+    console.log("-- Song updated! for: "+boseInfo.device+" --");
 
     boseInfo.method = "update";
     if(cString.updates.nowPlayingUpdated) {
@@ -348,13 +363,12 @@ function handleBoseData(cString, type) {
       boseInfo.type = "Connection";
     }
   }else{ // It's requested Information
-    console.log("-- Song information! --");
+    console.log("-- Song information! for: "+boseInfo.device+" --");
 
     boseInfo.method = "info";
     if(cString.nowPlaying) {
       boseInfo.type = "Music";
       boseInfo.source = cString.nowPlaying.$.source;
-      console.log(cString.nowPlaying.$.source);
     }else{
       boseInfo.type = "Volume";
     }
@@ -370,8 +384,6 @@ function handleBoseData(cString, type) {
           boseInfo.trackID = cString.updates.nowPlayingUpdated[0].nowPlaying[0].trackID[0];
           boseInfo.album = cString.updates.nowPlayingUpdated[0].nowPlaying[0].album[0];
           boseInfo.coverArt = cString.updates.nowPlayingUpdated[0].nowPlaying[0].art[0]._;
-          console.log("Good cString!");
-          console.log(cString);
         } catch (err) {
           console.log("!!!!! ERROR !!!!!");
           console.log(err);
@@ -421,6 +433,7 @@ function handleBoseData(cString, type) {
     io.sockets.emit('boseVolumeUpdate', [volume, muted]); // Respond with JSON Object of btnData
   }else if(boseInfo.type == "Connection") {
     console.log(" - Connection updated -");
+    console.log(boseInfo);
   }
 }
 

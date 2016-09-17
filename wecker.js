@@ -517,12 +517,19 @@ browser.on('serviceUp', function(service) {
   var sendUrl = 'http://'+newDevice.ip+":"+newDevice.cmdPort+'/info';
   needle.get(sendUrl, function(error, response) {
     if (!error && response.statusCode == 200) {
-      console.log("Successfully asked: "+newDevice.name+" for information.");
       newDevice.type = response.body.info.type;
       newDevice.Account = response.body.info.margeAccountUUID;
-      console.log("Found service: "+service.name+" - IP: "+service.addresses[0]+":"+service.port+" - MAC: "+service.txtRecord.MAC);
-      myBoseDevices.push(newDevice);
-      boseSystemsLoaded = true;
+
+      needle.get('http://'+newDevice.ip+":"+newDevice.cmdPort+'/now_playing', function(error, response) {
+        if (!error && response.statusCode == 200) {
+          newDevice.power = response.body.nowPlaying.$.source;
+          myBoseDevices.push(newDevice);
+          console.log("Found service: "+service.name+" ("+newDevice.power+") - IP: "+service.addresses[0]+":"+service.port+" - MAC: "+service.txtRecord.MAC);
+          boseSystemsLoaded = true;
+        }else{
+          console.log("Error getting additional info");
+        }
+      });
     }else{
       console.log("Error asking: "+newDevice.name+" for information. No device saved!");
     }

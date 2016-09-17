@@ -78,15 +78,21 @@ $(document).ready(function() { // Start when document is ready
         $('.boseSleeptimerBtn').html("Remove");
       }
     });
-    if(data.source == "SPOTIFY") { // It's playing Spotify
-      $('.boseSongInfo').html(data.artist+' - <a href="'+data.trackID+'">'+data.track+"<a/><br />");
-      $('.boseArt').html('<img class="boseArtContent" src="'+data.coverArt+'" width="300">');
-    }else if(data.source == "INTERNET_RADIO"){ // It's playing radio
-      $('.boseSongInfo').html(data.stationName+' ('+data.stationLocation+")"); // data.description
-      $('.boseArt').html('<img class="boseArtContent" src="'+data.coverArt+'" width="300">');
-    }else if(data.source == "STANDBY") {
-      $('.boseSongInfo').html(""); // data.description
-      $('.boseArt').html('System currently in Standby');
+
+    if(activeBoseSystem == data.device) {
+      if(data.source == "SPOTIFY") { // It's playing Spotify
+        $('.boseSongInfo').html(data.artist+' - <a href="'+data.trackID+'">'+data.track+"<a/><br />");
+        $('.boseArt').html('<img class="boseArtContent" src="'+data.coverArt+'" width="300">');
+      }else if(data.source == "INTERNET_RADIO"){ // It's playing radio
+        $('.boseSongInfo').html(data.stationName+' ('+data.stationLocation+")"); // data.description
+        $('.boseArt').html('<img class="boseArtContent" src="'+data.coverArt+'" width="300">');
+      }else if(data.source == "STANDBY") {
+        $('.boseSongInfo').html(""); // data.description
+        $('.boseArt').html('System currently in Standby');
+      }
+      $('#'+data.device+' .boseDevicePower').html(data.source);
+    }else{
+      $('#'+data.device+' .boseDevicePower').html(data.source);
     }
   });
 

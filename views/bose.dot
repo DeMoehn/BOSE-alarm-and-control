@@ -23,6 +23,9 @@
                     <div class="boseDeviceName">
                       {{=value.name}}
                     </div>
+                    <div class="boseDevicePower">
+                      {{=value.power}}
+                    </div>
                   </div>
                 </div>
               </li>

@@ -262,6 +262,11 @@ li.navactive {
 	display: none;
 }
 
+.boseDevicePower {
+	font-size: 10px;
+	font-style: italic;
+}
+
 .boseDevices {
   list-style-type: none;
   margin: 0;
