@@ -337,7 +337,8 @@ router.route('/sleeptimer/:timer_device').delete(function(req, res) {
   var timeoutIndex = myTimeouts.findIndex(x=> x.device === req.params.timer_device); // Find the current running timer Index
   if(currentIndex >= 0) {
       if(timeoutIndex >= 0) {
-        clearTimeout(myTimeouts.myTimeout);
+        clearTimeout(myTimeouts[timeoutIndex].myTimeout);
+        myTimeouts.splice(timeoutIndex, 1); // Remove the Timeout
         console.log("Timeout deleted!");
       }else{
         console.log("Timeout could not be found!");
