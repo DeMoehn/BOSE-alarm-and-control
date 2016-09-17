@@ -12,15 +12,13 @@ Some private work to create a web-app that can communicate with 433 MHz devices 
 # Preview
 
 ## Music page
-Desktop
+
 <img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/music_desktop.png" width="500"/>
-Mobile
 <img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/music_phone.png" width="250"/>
 
 ## Alarms page
-Desktop
+
 <img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/alarms_desktop.png" width="500"/>
-Mobile
 <img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/alarms_phone.png" width="250"/>
 
 # Install instructions
