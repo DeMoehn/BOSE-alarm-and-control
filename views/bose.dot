@@ -7,36 +7,49 @@
         <div>
           <div class="panel-heading"><p>Bose Systems</p></div>
           <div class="boseSystems">
-            {{~it.items :value:index}}
-              <div class="boseDevice" data-value="{{=value.MAC}}" id="{{=value.MAC}}">
-                <table>
-                  <tr><td>
-                    {{? value.type == "SoundTouch 10" }}
-                      <img src="img/SoundTouch10.png" height="60">
-                    {{?? value.type == "SoundTouch 20" }}
-                      <img src="img/SoundTouch20.png" height="60">
-                    {{??}}
-                    {{?}}
-                  </tr></td>
-                  <tr><td>
-                    {{=value.name}}
-                  </tr></td>
-                </table>
-              </div>
-            {{~}}
+            <ul class="boseDevices">
+              {{~it.items :value:index}}
+              <li>
+                <div class="boseDevice" data-value="{{=value.MAC}}" id="{{=value.MAC}}">
+                  <div>
+                    <div class="boseDeviceImg">
+                      {{? value.type == "SoundTouch 10" }}
+                        <img src="img/SoundTouch10.png" height="60">
+                      {{?? value.type == "SoundTouch 20" }}
+                        <img src="img/SoundTouch20.png" height="60">
+                      {{??}}
+                      {{?}}
+                    </div>
+                    <div class="boseDeviceName">
+                      {{=value.name}}
+                    </div>
+                  </div>
+                </div>
+              </li>
+              {{~}}
+            </ul>
+            <select name="boseDevicesDropdown" id="boseDevicesDropdown" class="boseDevicesDropdown">
+              {{~it.items :value:index}}
+                <option value="{{=value.MAC}}">{{=value.name}}</option>
+              {{~}}
+            </select>
           </div>
 
           <div class="panel">
             <div class="panel-heading"><p>System Information & Controls</p></div>
             <div class="panel-body">
               <div class="boseContent">
+
                 <div class="boseInfo">
-                  <div class="boseArt"></div>
-                  <div class="boseSongInfo"></div>
+                  <div class="boseInfoContent">
+                    <div class="boseArt"></div>
+                    <div class="boseSongInfo"></div>
+                  </div>
                 </div>
 
                 <!-- BOSE controls -->
                 <div class="boseControl">
+                  <div class="boseControlContent">
                     <div class="boseControlGroup">
                       <h4><span class="label">Presets<span id="ID" class="badge"></span></span></h4>
                       <button id="Preset1" type="button" class="boseButton btn" value='PRESET_1'><span style='padding-right:3px;'>1</span></button>
@@ -46,7 +59,6 @@
                       <button id="Preset5" type="button" class="boseButton btn" value='PRESET_5'><span style='padding-right:3px;'>5</span></button>
                       <button id="Preset6" type="button" class="boseButton btn" value='PRESET_6'><span style='padding-right:3px;'>6</span></button>
                     </div>
-
                     <div class="boseControlGroup">
                       <h4><span class="label">Controls<span id="ID" class="badge"></span></span></h4>
                       <button id="POWER" type="button" class="boseButton btn" data-loading-text="Loading..." value='POWER'><span class="glyphicon glyphicon-off"  aria-hidden="true"></span></button>
@@ -56,7 +68,6 @@
                       <button id="NEXT_TRACK" type="button" class="boseButton btn" data-loading-text="Loading..." value='NEXT_TRACK'><span class="glyphicon glyphicon-forward"  aria-hidden="true"></span></button>
                       <button id="THUMBS_UP" type="button" class="boseButton btn" data-loading-text="Loading..." value='THUMBS_UP'><span class="glyphicon glyphicon-thumbs-up"  aria-hidden="true"></span></button>
                     </div>
-
                     <div class="boseControlGroup">
                       <h4><span class="label">Volume<span id="ID" class="badge"></span></span></h4>
                       <button id="VOLUME_DOWN" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='VOLUME_DOWN'><span class="glyphicon glyphicon-volume-down"  aria-hidden="true"></span></button>
@@ -64,9 +75,11 @@
                       <button id="MUTE" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='MUTE'><span class="glyphicon glyphicon-volume-off"  aria-hidden="true"></span></button>
                       <div id="boseVolume" class="boseVolume">Current Volume: XX</div>
                     </div>
+                  </div>
                 </div>
-              </div>
+                <div class="clearFloat"></div>
 
+              </div>
             </div>
           </div>
         </div>

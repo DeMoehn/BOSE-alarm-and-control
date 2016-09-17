@@ -3,9 +3,8 @@
 // - Require & Variables Setup -
 // --------------------------------
 
-// - CONFIG starts here! -
-var couchdbIP = '192.168.1.220';
-// - CONFIG ends here! -
+// - Config File -
+var config = require('./config');
 
 // - Webserver & Socket IO -
 var express = require('express'); // Web - Framework
@@ -28,7 +27,7 @@ var sys = require('sys');
 var exec = require('child_process').exec;
 
 // - Database -
-var nano = require('nano')('http://'+couchdbIP+':5984'); // Connect to CouchDB on the PI
+var nano = require('nano')(config.couchDB.protocol+config.couchDB.ip+":"+config.couchDB.port); // Connect to CouchDB on the PI
 var db = nano.use('homeautomation'); // Connect to Database
 
 // - Define Variables -
@@ -67,33 +66,34 @@ app.get('/alarm', alarmRoute);
 
 // - Home route -
 function homeRoute(req, res) {
-  myGroups = []; // Reset variables if loaded again
-  myObjects = [];
-  objectsScanned = false;
-
-  db.view('show', 'groups', function(err, groupBody) { // Read all Groups
-    if (!err) {
-      db.view('show', 'btns', function(err, objectBody) { // Read all Objects
-        if (!err) {
-          groupBody.rows.forEach(function(groupDoc) { // For each Group
-            groupDoc.devices = Array(); // Store all objects here
-            objectBody.rows.forEach(function(objectDoc) { // For each Object
-              if(objectDoc.value.groupid == groupDoc.id) { // Does this object belong to the group?
-                groupDoc.devices.push(objectDoc);
-              }
-              if(!objectsScanned) {
-                myObjects.push(objectDoc.value);
-              }
-            });
-            myGroups.push(groupDoc); // Save the group to an array
-            objectsScanned = true; // Only save the objects once (not for every group)
-          });
-
-          res.render('index', {items: myGroups}); // Render and pass variables
-        }
-      });
-    }
-  });
+  res.redirect('/bose');
+  // myGroups = []; // Reset variables if loaded again
+  // myObjects = [];
+  // objectsScanned = false;
+  //
+  // db.view('show', 'groups', function(err, groupBody) { // Read all Groups
+  //   if (!err) {
+  //     db.view('show', 'btns', function(err, objectBody) { // Read all Objects
+  //       if (!err) {
+  //         groupBody.rows.forEach(function(groupDoc) { // For each Group
+  //           groupDoc.devices = Array(); // Store all objects here
+  //           objectBody.rows.forEach(function(objectDoc) { // For each Object
+  //             if(objectDoc.value.groupid == groupDoc.id) { // Does this object belong to the group?
+  //               groupDoc.devices.push(objectDoc);
+  //             }
+  //             if(!objectsScanned) {
+  //               myObjects.push(objectDoc.value);
+  //             }
+  //           });
+  //           myGroups.push(groupDoc); // Save the group to an array
+  //           objectsScanned = true; // Only save the objects once (not for every group)
+  //         });
+  //
+  //         res.render('index', {items: myGroups}); // Render and pass variables
+  //       }
+  //     });
+  //   }
+  // });
 }
 
 // - Manage route -

@@ -3,9 +3,9 @@
 // - Require & Variables Setup -
 // --------------------------------
 
-// - CONFIG starts here! -
-var couchdbIP = '192.168.1.220';
-// - CONFIG ends here! -
+// - Config File -
+var config = require('./config');
+console.log(config);
 
 // - Webserver -
 var express = require('express'); // Include Express
@@ -15,7 +15,7 @@ var mdns = require('mdns'); // MDNS Tool to discover devices
 var needle = require('needle'); // HTTP Handler
 
 // - Database -
-var nano = require('nano')('http://'+couchdbIP+':5984'); // Connect to CouchDB on the PI
+var nano = require('nano')(config.couchDB.protocol+config.couchDB.ip+":"+config.couchDB.port); // Connect to CouchDB on the PI
 var db = nano.use('bosealarms'); // Connect to Database
 
 // - Shell Scripts -

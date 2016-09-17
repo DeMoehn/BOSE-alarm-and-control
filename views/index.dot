@@ -28,19 +28,5 @@
         </div>
       {{~}}
 
-      <div class="col-md-6">
-        <div class="panel panel-primary">
-          <div class="panel-heading"><strong>Bose Büro</strong></div>
-          <div class="panel-body">
-            <div class="row">
-                <div class="col-xs-12">
-                  <div id="connstatus">Lulu</div>
-                  <div id="messages"></div>
-                </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
   </div>
 </div>

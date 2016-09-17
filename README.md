@@ -37,7 +37,7 @@ Some private work to create a web-app that can communicate with 433 MHz devices 
   - Now try to access the database on your Rascurl -xpberry PI from a local machine with `curl -X GET http://<PI-IP>:5984`
 
 ## Prepare CouchDB
-- Go to the file `app.js` and look for "// - CONFIG starts here! -" on line 6
-- Change `var couchdbIP = '<IP>';` to the couchDB IP address
+- Go to the file `config.json` and look for "couchDB" and then "ip": "192.168.1.220"," on line 4
+- Change `ip": "192.168.1.220"` to your couchDB IP address
 - In the "RaPi-Smarthome" Folder, use `chmod +x ./dbsetup/dbsetup.sh` to make the file executable
 - Run `./dbsetup/dbsetup.sh` and follow the installation process

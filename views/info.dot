@@ -1,22 +1,14 @@
 <div class="container theme-showcase" role="main" style="margin-top:70px;">
-  <div class="row">
-
-        <div class="col-md-12">
-          <div class="panel panel-primary">
-            <div class="panel-heading"><strong>Info</strong></div>
-            <div class="panel-body">
-              <div class="row">
-
-
-                <div class="col-xs-4">
-                  <p>Here will be way more info soon!</p>
-                </div>
-            
-
-              </div>
-            </div>
-          </div>
+  <div class="wrapper_middle">
+    <!-- Info Box -->
+    <div>
+      <div class="panel-heading"><p>Information</p></div>
+      <div class="panel-body">
+        <div class="row">
+          <p><b>Created by: </b>Sebastian Möhn</p>
+          <p><b>Date: </b>September, 2016</p>
         </div>
-
+      </div>
+    </div>
   </div>
 </div>

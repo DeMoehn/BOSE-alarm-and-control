@@ -5,8 +5,14 @@ $(document).ready(function() { // Start when document is ready
   socket.emit('boseGetSystem', ""); // Ask Server for current active System
 
   // - User interaction -
-  $('.boseDevice').click(function(){ // Handle Event of Bose Preset Button click
+  $('.boseDevice').click(function(){ // Handle Event of Bose System click
     var message = $(this).data('value');
+    socket.emit('boseDeviceButtonPressed', message); // Send event to Server
+    $('.boseDevicesDropdown option[value="'+message+'"]').prop('selected', true); // Select value in Mobile Fallback
+  });
+
+  $('.boseDevicesDropdown').change(function(){ // Mobile Fallback: Handle Event of Bose System in DropDown
+    var message = $(this).val();
     socket.emit('boseDeviceButtonPressed', message); // Send event to Server
   });
 
@@ -53,10 +59,10 @@ $(document).ready(function() { // Start when document is ready
   socket.on('boseInfoUpdate', function(data) { // Listen for event "btnActionPressedStatus"
     if(data.source == "SPOTIFY") { // It's playing Spotify
       $('.boseSongInfo').html(data.artist+' - <a href="'+data.trackID+'">'+data.track+"<a/><br />");
-      $('.boseArt').html('<img src="'+data.coverArt+'" width="300">');
+      $('.boseArt').html('<img class="boseArtContent" src="'+data.coverArt+'" width="300">');
     }else if(data.source == "INTERNET_RADIO"){ // It's playing radio
       $('.boseSongInfo').html(data.stationName+' ('+data.stationLocation+")"); // data.description
-      $('.boseArt').html('<img src="'+data.coverArt+'" width="300">');
+      $('.boseArt').html('<img class="boseArtContent" src="'+data.coverArt+'" width="300">');
     }else if(data.source == "STANDBY") {
       $('.boseSongInfo').html(""); // data.description
       $('.boseArt').html('System currently in Standby');

@@ -4,8 +4,10 @@
     <!-- Metatags -->
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="description" content="DeMoehn Homeautomation Website">
-    <meta name="author" content="DeMoehn">
+    <meta name="author" content="DeMoehn (Sebastian Moehn)">
+    <meta name="creator" content="DeMoehn (Sebastian Moehn)">
+    <meta name="publisher" content="DeMoehn (Sebastian Moehn)">
+    <meta name="description" content="Bose SoundTouch Controller and 433Mhz Home Automation">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0"/>
     <!-- Favicons -->
@@ -42,7 +44,7 @@
               media="(device-width: 768px) and (device-height: 1024px) and (orientation: landscape) and (-webkit-device-pixel-ratio: 2)"
               rel="apple-touch-startup-image">
     <!-- Title -->
-    <title>DeMoehn home automation</title>
+    <title>SoundTouch&Home Automation</title>
     <!-- CSS -->
     <link href="/css/style.css" rel="stylesheet">
     <link href="/css/glyphicon.css" rel="stylesheet">
@@ -59,26 +61,17 @@
   <body role="document">
     <!-- Fixed navbar -->
     <div class="navbar" role="navigation">
-      <ul class="nav navbar-nav">
+      <ul class="topnav" id="myTopnav">
         <li class="navbtn"><a href="/">Home</a></li>
         <li class="navbtn"><a href="/manage">Manage</a></li>
         <li class="navbtn"><a href="/bose">Bose Music</a></li>
         <li class="navbtn"><a href="/alarm">Bose Alarm</a></li>
-        <li class="navbtn" style="float: right"><a href="/info">Info</a></li>
+        <li class="navbtn" id="navRight"><a href="/info">Info</a></li>
+        <li class="icon">
+          <a id="hiddenNav" href="javascript:void(0);" onclick="javascript:myFunction()">&#9776;</a>
+        </li>
       </ul>
     </div>
-
-    <!-- <div class="container">
-      <div class="navbar-header">
-        <a class="navbar-brand" href="#">DeMoehn home automation</a>
-        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
-          <span class="sr-only">Toggle navigation</span>
-        </button>
-      </div>
-      <div class="navbar-collapse collapse">
-
-      </div>
-    </div> -->
 
     <!-- Dynamic Body -->
     {{=it.body}}
