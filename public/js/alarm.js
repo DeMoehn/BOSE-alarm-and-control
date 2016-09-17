@@ -5,6 +5,10 @@ $(document).ready(function() { // Start when document is ready
   socket.emit('boseGetDevices', ""); // Ask Server for all known devices
 
   // - User actions -
+  // -- Volume Slider --
+  $(document).on('input', '#alarmvolume', function(){ // Handle Event of Bose Preset Button click
+    $('#alarmvolumetext').html($(this).val());
+  });
   // -- Change alarm activity --
   $(document).on('click', '.switch-input', function(){ // Handle Event of Bose Preset Button click
     if($(this).prop("id") != "alarmsactive") { // PLease don't care about the switch from the "create new"-Field!
@@ -36,6 +40,7 @@ $(document).ready(function() { // Start when document is ready
     newAlarm.preset = parseInt($('[name="alarmpresets"]').val())+1;
     newAlarm.active = $('.alarmactive').prop("checked");
     newAlarm.device = $('#alarmdevice').val();
+    newAlarm.volume = $('#alarmvolume').val();
     socket.emit('alarmSaved', newAlarm); // Send event to Server
   });
 
@@ -56,24 +61,23 @@ $(document).ready(function() { // Start when document is ready
 
   // - Socket Responses -
   // -- Get and display all alarms --
-  var alarmSample0 = $('.alarm tr:first').clone(); // Clones the first <tr>
+  var alarmSample0 = $('.alarm .eachAlarm').clone(); // Clones the first <tr>
   socket.on('getAlarmsStatus', function(data) {
-    console.log(data.length);
     if(data.length > 0) {
-      $('.alarm').html(alarmSample0);
-      console.log(data);
+      console.log(alarmSample0);
       data.forEach(function(alarm) { // For each Group
         var alarmSample = alarmSample0.clone();
         alarmSample.attr('id', "alarm_"+alarm._id);
         alarmSample.css('display', "block");
         alarmSample.find('.alarmTime').html(alarm.time+" Uhr"); // Makes changes on this element
-        alarmSample.find('.alarmName').html(alarm.name+" - ");
+        alarmSample.find('.alarmName').html(alarm.name);
         alarmSample.find('.alarmDays').html(alarm.days.join(', '));
         Array.prototype.filterObjects = function(key, value) {
             return this.filter(function(x) { return x[key] === value; })
         }
         var currentObject = activeBoseSystems.filterObjects("MAC", alarm.device);
-        alarmSample.find('.alarmDevice').html(currentObject[0].name+" (Preset: "+alarm.preset+")");
+        alarmSample.find('.alarmDevice').html(currentObject[0].name);
+        alarmSample.find('.alarmPV').html("(Preset: "+alarm.preset+", Volume: "+alarm.volume+")");
         alarmSample.find('.switch-input').attr('id', alarm._id);
         alarmSample.find('.switch-input').attr('data-rev', alarm._rev);
         alarmSample.find('.editbtn').attr('data-id', alarm._id);
@@ -161,7 +165,6 @@ $(document).ready(function() { // Start when document is ready
   // - Create Day Picker -
   $("#alarmdays").multiPicker({ selector : "li" });
   $("#alarmpresets").multiPicker({ selector : "li", isSingle: true });
-
 
   // - Notifications -
   $.noty.defaults = {

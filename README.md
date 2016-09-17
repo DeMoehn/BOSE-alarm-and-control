@@ -7,6 +7,16 @@ Some private work to create a web-app that can communicate with 433 MHz devices 
 - Added a BOSE SoundTouch Alarm system, as these devices are not able to do that themselves.
 - Added Device discovery via MDNS
 
+# Preview
+
+## Music page
+<img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/music_desktop.png" width="500"/>
+<img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/music_phone.png" width="500"/>
+
+## Alarms page
+<img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/alarms_desktop.png" width="500"/>
+<img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/alarms_phone.png" width="500"/>
+
 # Install instructions
 
 ## Prepare the Raspberry PI
@@ -36,12 +46,6 @@ Some private work to create a web-app that can communicate with 433 MHz devices 
   - Try `netstat -an | grep 5984`, it should say `tcp        0      0 0.0.0.0:5984            0.0.0.0:*               LISTEN`, instead of `tcp        0      0 127.0.0.1:5984          0.0.0.0:*               LISTEN`
   - Now try to access the database on your Rascurl -xpberry PI from a local machine with `curl -X GET http://<PI-IP>:5984`
 
-## Prepare CouchDB
-- Go to the file `config.json` and look for "couchDB" and then "ip": "192.168.1.220"," on line 4
-- Change `ip": "192.168.1.220"` to your couchDB IP address
-- In the "RaPi-Smarthome" Folder, use `sudo chmod +x ./dbsetup/dbsetup.sh` to make the file executable
-- Run `./dbsetup/dbsetup.sh` and follow the installation process
-
 ## Download Git & Forever
 - Use `sudo apt-get install git` to install Git on the Raspberry Pi
 - Use `sudo npm install forever -g` to install Forever (https://github.com/foreverjs/forever) on the Raspberry Pi (Keeps scripts running)
@@ -52,6 +56,12 @@ Some private work to create a web-app that can communicate with 433 MHz devices 
 - Use `sudo npm install` to install all needed packages
 - Try `node app.js` and check if the application is running
 - Try `node wecker.js` and check if the timer app is running
+
+## Prepare CouchDB
+- Go to the file `config.json` and look for "couchDB" and then "ip": "192.168.1.220"," on line 4
+- Change `ip": "192.168.1.220"` to your couchDB IP address
+- In the "RaPi-Smarthome" Folder, use `sudo chmod +x ./dbsetup/dbsetup.sh` to make the file executable
+- Run `./dbsetup/dbsetup.sh` and follow the installation process
 
 ## Use Crontab & Forever
 - To make the scrips start on reboot I use crontab, to be sure they're restart when crashing I use forever

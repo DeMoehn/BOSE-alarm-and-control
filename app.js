@@ -172,6 +172,7 @@ function loadAlarms() {
         });
         myAlarm.days = newDays;
         myAlarm.preset = alarm.preset;
+        myAlarm.volume = alarm.volume;
         alarmsArr.push(myAlarm);
       });
       io.sockets.emit('getAlarmsStatus', alarmsArr); // Respond with JSON Object of btnData
@@ -450,6 +451,9 @@ io.on('connection', function(socket){
   socket.on('alarmDelete', alarmDelete);
   socket.on('alarmEdit', alarmEdit);
   socket.on('getAlarms', getAlarms);
+  socket.on('boseSleeptimer', boseSleeptimer);
+  socket.on('boseGetTimers', boseGetTimers);
+  socket.on('boseSleeptimerRemove', boseSleeptimerRemove);
 });
 
 
@@ -601,6 +605,7 @@ io.on('connection', function(socket){
         myNewAlarm.name = resp.body.data.name;
         myNewAlarm.time = resp.body.data.time;
         myNewAlarm.days = resp.body.data.days;
+        myNewAlarm.volume = resp.body.data.volume;
         myNewAlarm.active = resp.body.data.active;
         myNewAlarm.device = resp.body.data.device;
         myNewAlarm.preset = resp.body.data.preset;
@@ -659,4 +664,43 @@ io.on('connection', function(socket){
   // -- Get all current alarms --
   function getAlarms(data, callback) {
     loadAlarms();
+  }
+
+  // -- Set a Sleeptimer --
+  function boseSleeptimer(data, callback) {
+    needle.post('http://localhost:3333/api/sleeptimer?time='+data[0]+'&device='+data[1], {}, function(err, resp) {
+      if (!err) {
+        if(resp.body.hasOwnProperty('data')) { // Everything went ok
+          console.log("Created sleeptimer for: "+resp.body.data.device); // JSON decoding magic. :)
+          io.sockets.emit('boseSleeptimerStatus', resp.body); // Respond with JSON Object of btnData
+        }else{ // There was an error updating but the API Call was ok
+          console.log("API Prob, Sleeptimer!");
+          io.sockets.emit('boseSleeptimerStatus', resp.body); // Respond with JSON Object of btnData
+        }
+      }else{ // API couldn't be called
+        io.sockets.emit('boseSleeptimerStatus', err); // Respond with JSON Object of btnData
+      }
+    });
+  }
+
+  // -- Delivers all active Sleeptimers --
+  function boseGetTimers(data, callback) {
+    needle.get('http://localhost:3333/api/sleeptimer/', function(err, resp) {
+      if (!err) {
+        io.sockets.emit('boseGetTimersStatus', resp.body); // Respond with JSON Object of btnData
+      }else{ // API couldn't be called
+        console.log("Error changing alarm activity");
+        io.sockets.emit('boseGetTimersStatus', err); // Respond with JSON Object of btnData
+      }
+    });
+  }
+
+  function boseSleeptimerRemove(data, callback) {
+    needle.delete('http://localhost:3333/api/sleeptimer/'+data, 0, function(err, resp) {
+      if (!err) {
+        io.sockets.emit('boseSleeptimerRemoveStatus', resp.body); // Respond with JSON Object of btnData
+      }else{ // API couldn't be called
+        io.sockets.emit('alarmDeleteStatus', {error: true, desc: "Could not contact host"}); // Respond with JSON Object of btnData
+      }
+    });
   }

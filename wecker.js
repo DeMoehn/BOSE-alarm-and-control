@@ -30,6 +30,8 @@ app.use(bodyParser.json());
 // - Configure Variables -
 var port = process.env.PORT || 3333; // Set the port
 var runningAlarms = Array(); // Create an Array for all running alarms
+var runningTimers = Array(); // Create an Array for all running sleeptimers
+var myTimeouts = Array(); // Create an Array for all running sleeptimers
 var myBoseDevices = Array();
 
 // -----------------------
@@ -68,6 +70,7 @@ router.route('/timer').post(function(req, res) {
     }else{
       data.preset = 1;
     }
+    data.volume = req.body.volume; // Device Volume
 
     db.insert(data, function(err, body, header) { // Insert Object to DB
       if (!err) {
@@ -288,30 +291,65 @@ router.route('/timer/:timer_id').delete(function(req, res) {
   }
 });
 
-// -- Create a new Sleeptimer -- // TODO: Create Sleeptimer
+// -- Create a new Sleeptimer --
 router.route('/sleeptimer').post(function(req, res) {
-  if(req.query.time !== undefined && req.query.days !== undefined && req.query.name !== undefined) { // If all needed Parameters are set
+  if(req.query.time !== undefined && req.query.device !== undefined) { // If all needed Parameters are set
     var data = {}; // Create new object
-    data.type = "alarm";
-    data.name = req.query.name;
+    data.type = "sleeptimer";
     data.time = req.query.time;
-    data.days = req.query.days;
-    data.active = true;
+    data.device = req.query.device;
 
-    db.insert(data, function(err, body, header) { // Insert Object to DB
-      if (!err) {
-        setAlarm(data);
-        res.json({ok: true, data: data, body: body}); // Respond with data
-      }else{
-        res.json({error: true, desc: err}); // Respond with data
-      }
-    });
+    var d = new Date(); // Get current Date
+    var cH = d.getHours();
+    var cM = d.getMinutes();
+    var cS = d.getSeconds();
+    data.startTime = cH+":"+cM+":"+cS;
+
+    var d2 = new Date (d.getTime() + data.time*1000); // Get end Time
+    var cH2 = d2.getHours();
+    var cM2 = d2.getMinutes();
+    var cS2 = d2.getSeconds();
+    data.endTime = cH2+":"+cM2+":"+cS2;
+
+    var currentObject = runningTimers.find(x=> x.device === data.device); // Check if there already is a timer for that device
+    if(currentObject !== undefined) {
+      res.json({error: true, desc: "Sleeptimer for device already exists", data: req.query}); // Respond with data
+    }else{
+      runningTimers.push(data);
+      setSleeptimer(data);
+      console.log("Sleeptimer will be created.")
+      res.json({ok: true, data: data}); // Respond with data
+    }
 
   }else if( (req.query.time === undefined) || (req.query.days === undefined) || (req.query.name === undefined) ) { // Neede Parameters not set
-    res.json({error: true, desc: "Parameters (time, days and name) are needed!", data: req.query}); // Respond with error
+    res.json({error: true, desc: "Parameters (time & device) are needed!", data: req.query}); // Respond with error
   }
 });
 
+// -- Get all Sleeptimers --
+router.route('/sleeptimer').get(function(req, res) {
+  res.json({ok: true, data: runningTimers}); // Respond with data
+});
+
+// -- Delete a specific sleeptimer --
+router.route('/sleeptimer/:timer_device').delete(function(req, res) {
+  var currentIndex = runningTimers.findIndex(x=> x.device === req.params.timer_device); // Find the current running timer Index
+  var timeoutIndex = myTimeouts.findIndex(x=> x.device === req.params.timer_device); // Find the current running timer Index
+  if(currentIndex >= 0) {
+      if(timeoutIndex >= 0) {
+        clearTimeout(myTimeouts.myTimeout);
+        console.log("Timeout deleted!");
+      }else{
+        console.log("Timeout could not be found!");
+      }
+      runningTimers.splice(currentIndex, 1); // Remove the Timer
+      res.json({ok: true, data: runningTimers, device: req.params.timer_device}); // Respond with data
+      console.log("Sleeptimer deleted for device: "+req.params.timer_device);
+  }else{
+      res.json({error: true, desc: "Sleeptimer could not be found", data: req.params.timer_device}); // Respond with data
+      console.log("Error deleting sleeptimer for device: "+req.params.timer_device);
+  }
+});
 
 // - Router Options -
 // -- Use "/api" for the router --
@@ -339,7 +377,7 @@ function setAlarm(data) {
     console.log(err);
     initializeAlarms();
   }
-  console.log("Started Alarm: "+data.name+" (Time: "+data.time+" - Days: "+data.days.join(", ")+" - Preset: "+data.preset+" - Active: "+data.active+") for device: "+currentObject.name);
+  console.log("Started Alarm: "+data.name+" (Time: "+data.time+" - Days: "+data.days.join(", ")+" - Preset: "+data.preset+" - Active: "+data.active+" - Volume: "+data.volume+") for device: "+currentObject.name);
 }
 
 // - Initialize Alarms -
@@ -379,22 +417,48 @@ function checkTime() {
 
       if(alarm.active === "true") {
         if( (alarmDays.indexOf(currentDay.toString()) > -1) && (currentHour == alarmHour) && (currentMinute == alarmMinute) ) {
-          console.log("ALARM! Alarm: \""+alarm.name+"\" is met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute+" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - D: "+currentObject.name+")");
+          console.log("ALARM! Alarm: \""+alarm.name+"\" is met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute+" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - V: "+alarm.volume+" - D: "+currentObject.name+")");
           startBose("PRESET_"+alarm.preset, currentObject);
-          boseVolume(20, currentObject);
+          boseVolume(parseInt(alarm.volume), currentObject);
           startBose("SHUFFLE_ON", currentObject);
         }else{
           if(alarmDays.indexOf(currentDay.toString()) > -1) {
-            console.log("Alarm: \""+alarm.name+"\" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - D: "+currentObject.name+") is running. Day met! Time not! - Current time: "+currentHour+":"+currentMinute);
+            console.log("Alarm: \""+alarm.name+"\" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - V: "+alarm.volume+" - D: "+currentObject.name+") is running. Day met! Time not! - Current time: "+currentHour+":"+currentMinute);
           }else{
-            console.log("Alarm: \""+alarm.name+"\" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - D: "+currentObject.name+") is running. Day not met! - Current day: "+currentDay);
+            console.log("Alarm: \""+alarm.name+"\" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - V: "+alarm.volume+" - D: "+currentObject.name+") is running. Day not met! - Current day: "+currentDay);
           }
         }
       }else{
-        console.log("Alarm: \""+alarm.name+"\" is not active. (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - D: "+currentObject.name+")");
+        console.log("Alarm: \""+alarm.name+"\" is not active. (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - V: "+alarm.volume+" - D: "+currentObject.name+")");
       }
     });
   }
+}
+
+// - Create Sleeptimer -
+function setSleeptimer(data) {
+  var myTimeout = setTimeout(sendStop, parseInt(data.time*1000), data.device);
+  timeout = {};
+  timeout.device = data.device;
+  timeout.myTimeout = myTimeout;
+  myTimeouts.push(timeout);
+  console.log("Timer Created. Duration: "+data.time+"s - Device: "+data.device+" - Start: "+data.startTime+" - End: "+data.endTime);
+}
+
+// - Sends Stop -
+function sendStop(device) {
+  var currentIndex = runningTimers.findIndex(x=> x.device === device); // Find the current running timer Index
+  var currentObject = myBoseDevices.find(x=> x.MAC === device); // Find Object where _id equals data.id
+  if(currentIndex >= 0) {
+    runningTimers.splice(currentIndex, 1); // Remove the Alarm
+    console.log("Sleeptimer removed for: "+device)
+    console.log(runningTimers);
+  }else{
+    console.log("Problem with deleting sleeptimer for: "+device)
+  }
+
+  startBose("POWER", currentObject); // Sends Power OFF/ON to Device
+  console.log("BOSE Stop!! Device: "+currentObject.name);
 }
 
 // ----------------------------

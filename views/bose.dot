@@ -75,6 +75,21 @@
                       <button id="MUTE" type="button" class="boseButton btn btn-primary" data-loading-text="Loading..." value='MUTE'><span class="glyphicon glyphicon-volume-off"  aria-hidden="true"></span></button>
                       <div id="boseVolume" class="boseVolume">Current Volume: XX</div>
                     </div>
+                    <div class="boseControlGroup">
+                      <h4><span class="label">Sleeptimer<span id="ID" class="badge"></span></span></h4>
+                      <select name="boseSleeptimer" class="boseSleeptimer" id="boseSleeptimer">
+                        <option value="5">5min</option>
+                        <option value="10">10min</option>
+                        <option value="15">15min</option>
+                        <option value="30">30min</option>
+                        <option value="45">45min</option>
+                        <option value="60">1h</option>
+                        <option value="120">2h</option>
+                        <option value="180">3h</option>
+                      </select>
+                      <button type="button" class="btn btn-primary boseSleeptimerBtn" value='saveSleeptimer'>Save</button>
+                      <div id="boseSleeptimerText" class="boseSleeptimerText">Timer: not set</div>
+                    </div>
                   </div>
                 </div>
                 <div class="clearFloat"></div>
