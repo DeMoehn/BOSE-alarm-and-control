@@ -6,16 +6,22 @@ Some private work to create a web-app that can communicate with 433 MHz devices 
 # Interesting
 - Added a BOSE SoundTouch Alarm system, as these devices are not able to do that themselves.
 - Added Device discovery via MDNS
+- Added a sleeptimer system for the BOSE SoundTouch devices
+- Added some responsive features to make the app work with most iOS devices
 
 # Preview
 
 ## Music page
+Desktop
 <img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/music_desktop.png" width="500"/>
-<img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/music_phone.png" width="500"/>
+Mobile
+<img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/music_phone.png" width="250"/>
 
 ## Alarms page
+Desktop
 <img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/alarms_desktop.png" width="500"/>
-<img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/alarms_phone.png" width="500"/>
+Mobile
+<img src="https://raw.githubusercontent.com/DeMoehn/RaPi-Smarthome/master/github-data/alarms_phone.png" width="250"/>
 
 # Install instructions
 
