@@ -30,7 +30,7 @@ Some private work to create a web-app that can communicate with 433 MHz devices 
 - Now use `sudo apt-get update && sudo apt-get upgrade` to update the PI
 
 ## Install NodeJS & NPM
-- Download the latest NodeJS file with `wget http://nodejs.org/dist/latest-v4.x/node-v4.4.0-linux-armv7l.tar.gz`
+- Download the latest NodeJS file with `wget http://nodejs.org/dist/latest-v4.x/node-v4.4.0-linux-armv7l.tar.gz` (It depends on your Raspberry PI if you need a version for ARM6, ARM7 or ARM8)
 - Unpack the file with `tar -xvf node-v4.4.0-linux-armv7l.tar.gz`
 - Change to the directory with `cd node-v4.4.0-linux-armv7l`
 - Copy the files to "/usr/local" with `sudo cp -R * /usr/local/`
@@ -49,6 +49,9 @@ Some private work to create a web-app that can communicate with 433 MHz devices 
   - Restart CouchDB via `/etc/init.d/couchdb restart`, it should say something like `[ ok ] Restarting couchdb (via systemctl): couchdb.service.`
   - Try `netstat -an | grep 5984`, it should say `tcp        0      0 0.0.0.0:5984            0.0.0.0:*               LISTEN`, instead of `tcp        0      0 127.0.0.1:5984          0.0.0.0:*               LISTEN`
   - Now try to access the database on your Rascurl -xpberry PI from a local machine with `curl -X GET http://<PI-IP>:5984`
+
+## Install needed Libraries
+- To use the MSDN discovery you need the Package "Development headers for the Avahi Apple Bonjour compatibility library", use `sudo apt-get install libavahi-compat-libdnssd-dev `
 
 ## Download Git & Forever
 - Use `sudo apt-get install git` to install Git on the Raspberry Pi
