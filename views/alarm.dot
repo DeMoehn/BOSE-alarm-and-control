@@ -57,7 +57,7 @@
               </tr>
             <tr>
               <td class="alarm_left_td">Time:</td>
-              <td><input type="time" name="alarmtime" class="input alarmtime" placeholder="00:00"></td>
+              <td><input type="time" pattern="([0-1]{1}[0-9]{1}|20|21|22|23):[0-5]{1}[0-9]{1}" name="alarmtime" class="input alarmtime" placeholder="00:00"></td>
             </tr>
             <tr class="unselectable">
               <td class="alarm_left_td">Days:</td>
@@ -113,6 +113,8 @@
               <td></td>
               <td class="alarm_both_td">
                 <button type="button" class="btn" id="alarmsave">Save</button>
+                <button type="button" class="btn" id="canceledit">Cancel</button>
+                <input type="hidden" name="alarmdata" id="alarmdata" data-data="">
               </td>
             </tr>
           </table>

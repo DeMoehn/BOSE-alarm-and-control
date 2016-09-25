@@ -140,42 +140,45 @@ function loadAlarms() {
   var sendUrl = "http://localhost:3333/api/timer";
   needle.get(sendUrl, function(error, response) {
     if (!error && response.statusCode == 200) {
-      console.log(response.body);
-      alarmsArr = []; // Empty Alarms array
-      response.body.alarms.forEach(function(alarm) { // For each Group
-        var myAlarm = {}; // Current alarm we are editing
-        myAlarm = alarm;
-        // Normalize the Alarm time, as the other script works with single values without "0" infront
-        var myAlarmTime = alarm.time.split(":");
-        if(myAlarmTime[0].length == 1) {
-          myAlarmTime[0] = "0"+myAlarmTime[0];
-        }
-        if(myAlarmTime[1].length == 1) {
-          myAlarmTime[1] = "0"+myAlarmTime[1];
-        }
-        myAlarm.time = myAlarmTime[0]+":"+myAlarmTime[1];
+      if(!response.body.hasOwnProperty('error')) {
+        alarmsArr = []; // Empty Alarms array
+        response.body.alarms.forEach(function(alarm) { // For each Group
+          var myAlarm = {}; // Current alarm we are editing
+          myAlarm = alarm;
+          // Normalize the Alarm time, as the other script works with single values without "0" infront
+          var myAlarmTime = alarm.time.split(":");
+          if(myAlarmTime[0].length == 1) {
+            myAlarmTime[0] = "0"+myAlarmTime[0];
+          }
+          if(myAlarmTime[1].length == 1) {
+            myAlarmTime[1] = "0"+myAlarmTime[1];
+          }
+          myAlarm.time = myAlarmTime[0]+":"+myAlarmTime[1];
 
-        // Normalize days, as the other script needs integers and we want actual days
-        myAlarm.days = alarm.days;
-        var weekday = new Array(7);
-        weekday[0]=  "So";
-        weekday[1] = "Mo";
-        weekday[2] = "Di";
-        weekday[3] = "Mi";
-        weekday[4] = "Do";
-        weekday[5] = "Fr";
-        weekday[6] = "Sa";
-        var newDays = Array();
-        myAlarm.days.forEach(function(day) { // For each Group
-          var newDay = weekday[day];
-          newDays.push(newDay);
+          // Normalize days, as the other script needs integers and we want actual days
+          myAlarm.days = alarm.days;
+          var weekday = new Array(7);
+          weekday[0]=  "So";
+          weekday[1] = "Mo";
+          weekday[2] = "Di";
+          weekday[3] = "Mi";
+          weekday[4] = "Do";
+          weekday[5] = "Fr";
+          weekday[6] = "Sa";
+          var newDays = Array();
+          myAlarm.days.forEach(function(day) { // For each Group
+            var newDay = weekday[day];
+            newDays.push(newDay);
+          });
+          myAlarm.days = newDays;
+          myAlarm.preset = alarm.preset;
+          myAlarm.volume = alarm.volume;
+          alarmsArr.push(myAlarm);
         });
-        myAlarm.days = newDays;
-        myAlarm.preset = alarm.preset;
-        myAlarm.volume = alarm.volume;
-        alarmsArr.push(myAlarm);
-      });
-      io.sockets.emit('getAlarmsStatus', alarmsArr); // Respond with JSON Object of btnData
+        io.sockets.emit('getAlarmsStatus', alarmsArr); // Respond with JSON Object of btnData
+      }else{
+        io.sockets.emit('getAlarmsStatus', {error: true, desc: "Could not load data from server"}); // Respond with JSON Object of btnData
+      }
     }else{
       console.log(error);
     }
@@ -237,51 +240,26 @@ function sendToBose(obj, data) {
 // ----------------------------
 
 // - Watch and recieve devices -
-// -- Watch all http servers -- TODO: Don't search on your own, use wecker.js API!
-var sequence = [
-    mdns.rst.DNSServiceResolve(),
-    'DNSServiceGetAddrInfo' in mdns.dns_sd ? mdns.rst.DNSServiceGetAddrInfo() : mdns.rst.getaddrinfo({families:[0]}),
-    mdns.rst.makeAddressesUnique()
-];
-var browser = mdns.createBrowser(mdns.tcp('soundtouch'), {resolverSequence: sequence});
-
-// -- Read broadcasting devices and save them --
-browser.on('serviceUp', function(service) {
-  var newDevice = {};
-  newDevice.name = service.name;
-  newDevice.ip = service.addresses[0]
-  newDevice.cmdPort = service.port; // Command Port
-  newDevice.wsPort = '8080'; // WebSocket Port
-  newDevice.MAC = service.txtRecord.MAC;
-
-  var sendUrl = 'http://'+newDevice.ip+":"+newDevice.cmdPort+'/info';
-  needle.get(sendUrl, function(error, response) {
-    if (!error && response.statusCode == 200) {
-      newDevice.type = response.body.info.type;
-      newDevice.Account = response.body.info.margeAccountUUID;
-
-      needle.get('http://'+newDevice.ip+":"+newDevice.cmdPort+'/now_playing', function(error, response) {
-        if (!error && response.statusCode == 200) {
-          newDevice.power = response.body.nowPlaying.$.source;
-          myBoseDevices.push(newDevice);
-          console.log("Found service: "+service.name+" ("+newDevice.power+") - IP: "+service.addresses[0]+":"+service.port+" - MAC: "+service.txtRecord.MAC);
-          boseSystemsLoaded = true;
-        }else{
-          console.log("Error getting additional info");
-        }
-      });
-    }else{
-      console.log("Error asking: "+newDevice.name+" for information. No device saved!");
+// -- Watch all http servers --
+function requestDevices() {
+  needle.get('http://localhost:3333/api/systems', function(err, resp) {
+    if (!err) {
+      if(resp.body.data[0].name == "none" && deviceRequests < 10) {
+        console.log("I only find 'None' device, I'll try harder...");
+        deviceRequests++;
+        setTimeout(requestDevices, 500);
+      }else{
+        myBoseDevices = resp.body.data
+        console.log(myBoseDevices);
+      }
+    }else{ // API couldn't be called
+      console.log("Problem requesting Bose device from wecker.js via API");
+      setTimeout(requestDevices, 500);
     }
   });
-});
-
-// -- Listen to devices that go down --
-browser.on('serviceDown', function(service) {
-  console.log(service);
-  // TODO: Remove device from myBoseDevices
-});
-browser.start();
+}
+var deviceRequests = 0;
+requestDevices();
 
 // - Send Key -
 function boseKey(data) {
@@ -321,7 +299,7 @@ function listen() {
       setTimeout(listen, 1000);
     };
   }else{
-    console.log("Currently no BOSE System to listen... (retry in 1s)");
+    //console.log("Currently no BOSE System to listen... (retry in 1s)");
     setTimeout(listen, 1000);
   }
 }
@@ -461,6 +439,7 @@ io.on('connection', function(socket){
   socket.on('alarmActiveState', alarmActiveState);
   socket.on('alarmActiveChanged', alarmActiveChanged);
   socket.on('alarmSaved', alarmSaved);
+  socket.on('alarmEdited', alarmEdited);
   socket.on('alarmDelete', alarmDelete);
   socket.on('alarmEdit', alarmEdit);
   socket.on('getAlarms', getAlarms);
@@ -558,7 +537,11 @@ io.on('connection', function(socket){
 
   // - Respond with all known Bose devices -
   function boseGetDevices(data, callback) {
-    io.sockets.emit('boseGetDevicesUpdate', myBoseDevices); // Respond with JSON Object of btnData
+    if(myBoseDevices.length > 0) {
+      io.sockets.emit('boseGetDevicesUpdate', myBoseDevices); // Respond with JSON Object of btnData
+    }else{
+      io.sockets.emit('boseGetDevicesUpdate', {error: true, desc:"No Bose devices found"}); // Respond with JSON Object of btnData
+    }
   }
 
   // - Change active BOSE System -
@@ -587,7 +570,8 @@ io.on('connection', function(socket){
   function alarmActiveChanged(data, callback) {
     var currentObject = alarmsArr.find(x=> x._id === data[0]); // Find Object where _id equals data.id
     var currentObjectIndex = alarmsArr.findIndex(x=> x._id === data[0]); // Find Object where _id equals data.id
-    needle.put('http://localhost:3333/api/timer/'+currentObject._id+'?rev='+currentObject._rev+'&active='+data[1], {}, function(err, resp) {
+    var myObject = {_rev:currentObject._rev, active:data[1]};
+    needle.put('http://localhost:3333/api/timer/'+currentObject._id, myObject, function(err, resp) {
       if (!err) {
         if(resp.body.hasOwnProperty('updated') && resp.body.hasOwnProperty('resp')) { // Everything went ok
           console.log("Changed alarm activity of: "+currentObject.name+" to: "+data[1]); // JSON decoding magic. :)
@@ -598,12 +582,11 @@ io.on('connection', function(socket){
           io.sockets.emit('alarmActiveChangedStatus', resp.body); // Respond with JSON Object of btnData
         }else{ // There was an error updating but the API Call was ok
           alarmActiveState() // Change alarm state back to normal
-          console.log("API Prob!");
-          console.log(resp.body);
+          io.sockets.emit('alarmActiveChangedStatus', resp.body); // Respond with JSON Object of btnData
         }
       }else{ // API couldn't be called
         alarmActiveState() // Change alarm state back to normal
-        console.log("Error changing alarm activity");
+        io.sockets.emit('alarmActiveChangedStatus', {error: true, desc: "Problem accessing the server!"}); // Respond with JSON Object of btnData
       }
     });
   }
@@ -614,21 +597,26 @@ io.on('connection', function(socket){
     var currentObjectIndex = alarmsArr.findIndex(x=> x._id === data[0]); // Find Object where _id equals data.id
     needle.post('http://localhost:3333/api/timer', data, function(err, resp) {
       if (!err) {
-        var myNewAlarm = {}; // Add the new alarm to the alarms
-        myNewAlarm.name = resp.body.data.name;
-        myNewAlarm.time = resp.body.data.time;
-        myNewAlarm.days = resp.body.data.days;
-        myNewAlarm.volume = resp.body.data.volume;
-        myNewAlarm.active = resp.body.data.active;
-        myNewAlarm.device = resp.body.data.device;
-        myNewAlarm.preset = resp.body.data.preset;
-        myNewAlarm._id = resp.body.body.id;
-        myNewAlarm._rev = resp.body.rev;
-        alarmsArr.push(myNewAlarm);
-        io.sockets.emit('alarmSavedStatus', myNewAlarm); // Respond with JSON Object of btnData
-        console.log(resp);
+        alarmsArr.push(resp.body.data);
+        io.sockets.emit('alarmSavedStatus', resp.body); // Respond with JSON Object of btnData
       }else{ // API couldn't be called
-        //
+        io.sockets.emit('alarmSavedStatus', {error: true, desc: 'Could not call API Server'}); // Respond with JSON Object of btnData
+        console.log("Error changing alarm activity");
+      }
+    });
+  }
+
+  // -- Edit an alarm --
+  function alarmEdited(data, callback) {
+    var currentObjectIndex = alarmsArr.findIndex(x=> x._id === data._id); // Find Object where _id equals data.id
+
+    needle.put('http://localhost:3333/api/timer/'+data._id+'?rev='+data._rev, data, function(err, resp) {
+      if (!err) {
+        alarmsArr.splice(currentObjectIndex, 1);
+        alarmsArr.push(resp.body.data);
+        io.sockets.emit('alarmEditedStatus', resp.body); // Respond with JSON Object of btnData
+      }else{ // API couldn't be called
+        io.sockets.emit('alarmEditedStatus', {error: true, desc: 'Could not call API Server'}); // Respond with JSON Object of btnData
         console.log("Error changing alarm activity");
       }
     });
@@ -708,6 +696,7 @@ io.on('connection', function(socket){
     });
   }
 
+  // -- Removes a Sleeptimer from a device --
   function boseSleeptimerRemove(data, callback) {
     needle.delete('http://localhost:3333/api/sleeptimer/'+data, 0, function(err, resp) {
       if (!err) {

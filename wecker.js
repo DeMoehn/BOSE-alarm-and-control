@@ -5,7 +5,6 @@
 
 // - Config File -
 var config = require('./config');
-console.log(config);
 
 // - Webserver -
 var express = require('express'); // Include Express
@@ -38,7 +37,7 @@ var myBoseDevices = Array();
 // - Startup Functions -
 // -----------------------
 initializeAlarms(); // Creates the alarms
-var boseSystemsLoaded = false; // Indicates that now systems are found by now
+var boseSystemsLoaded = false; // Indicates that no systems are found by now
 var alarmInterval = setInterval(checkTime, 55000); // Start the Alarm - Interval (55sec)
 
 
@@ -206,7 +205,7 @@ router.route('/timer/:timer_id').get(function(req, res) {
 
 // -- Change a specific timer --
 router.route('/timer/:timer_id').put(function(req, res) {
-  var rev = req.query.rev;
+  var rev = req.body._rev;
   if(rev === undefined) { // The Script needs the _rev (Revision) of the timer to work
     res.json({error: true, desc: "Revision (?rev) of Timer needed", timer: req.params.timer_id}); // Throw error if no ?rev was set
   }else{
@@ -219,26 +218,29 @@ router.route('/timer/:timer_id').put(function(req, res) {
           var oldBody = body;
 
           // Check if the needed params exist in the query and change the old object
-          if(req.query.name === undefined && req.query.time === undefined && req.query.days === undefined && req.query.active === undefined) {
+          if(req.body.name === undefined && req.body.time === undefined && req.body.days === undefined && req.body.active === undefined) {
             res.json({error: true, desc: "At least one argument (of: name, time, days or active) is needed!", timer: req.params.timer_id, rev: rev});
           }else{
-            if(req.query.name !== undefined) {
-              myAlarm.name = req.query.name;
+            if(req.body.name !== undefined) {
+              myAlarm.name = req.body.name;
             }
-            if(req.query.time !== undefined) {
-              myAlarm.time = req.query.time;
+            if(req.body.time !== undefined) {
+              myAlarm.time = req.body.time;
             }
-            if(req.query.days !== undefined) {
-              myAlarm.days= req.query.days;
+            if(req.body.days !== undefined) {
+              myAlarm.days= req.body.days;
             }
-            if(req.query.active !== undefined) {
-              myAlarm.active = req.query.active;
+            if(req.body.active !== undefined) {
+              myAlarm.active = req.body.active;
             }
-            if(req.query.device !== undefined) {
-              myAlarm.device = req.query.device;
+            if(req.body.device !== undefined) {
+              myAlarm.device = req.body.device;
             }
-            if(req.query.preset !== undefined) {
-              myAlarm.preset = req.query.preset;
+            if(req.body.preset !== undefined) {
+              myAlarm.preset = req.body.preset;
+            }
+            if(req.body.volume !== undefined) {
+              myAlarm.volume = req.body.volume;
             }
 
 
@@ -352,6 +354,15 @@ router.route('/sleeptimer/:timer_device').delete(function(req, res) {
   }
 });
 
+// -- Get Bose Systems --
+router.route('/systems').get(function(req, res) {
+  if(boseSystemsLoaded) {
+    res.json({ok: true, data: myBoseDevices});
+  }else{
+    res.json({ok: true, data: [{name: "none", MAC: "None"}]});
+  }
+});
+
 // - Router Options -
 // -- Use "/api" for the router --
 app.use('/api', router);
@@ -370,15 +381,19 @@ function setAlarm(data) {
   var newAlarm = {}; // Create a new Alarm Object
   newAlarm = data;
   runningAlarms.push(newAlarm);
-  try {
-    var currentObject = myBoseDevices.find(x=> x.MAC === data.device); // Find Object where _id equals data.id
-  } catch (err) {
-    var currentObject = {};
-    currentObject.name = "error, retry";
-    console.log(err);
-    initializeAlarms();
+  if(myBoseDevices.length > 0 && data.device !== "None") {
+    try {
+      var currentObject = myBoseDevices.find(x=> x.MAC === data.device); // Find Object where _id equals data.id
+    } catch (err) {
+      var currentObject = {};
+      currentObject.name = "error, retry";
+      console.log(err);
+      initializeAlarms();
+    }
+    console.log("Started Alarm: "+data.name+" (Time: "+data.time+" - Days: "+data.days.join(", ")+" - Preset: "+data.preset+" - Active: "+data.active+" - Volume: "+data.volume+") for device: "+currentObject.name);
+  }else{
+    console.log("Started Alarm: "+data.name+" (Time: "+data.time+" - Days: "+data.days.join(", ")+" - Preset: "+data.preset+" - Active: "+data.active+" - Volume: "+data.volume+") for device: not found");
   }
-  console.log("Started Alarm: "+data.name+" (Time: "+data.time+" - Days: "+data.days.join(", ")+" - Preset: "+data.preset+" - Active: "+data.active+" - Volume: "+data.volume+") for device: "+currentObject.name);
 }
 
 // - Initialize Alarms -
@@ -414,7 +429,12 @@ function checkTime() {
       var alarmDays = alarm.days;
       var alarmHour = alarm.time.split(":")[0];
       var alarmMinute= alarm.time.split(":")[1];
-      var currentObject = myBoseDevices.find(x=> x.MAC === alarm.device); // Find Object where _id equals data.id
+      if(alarm.device !== "None") {
+        var currentObject = myBoseDevices.find(x=> x.MAC === alarm.device); // Find Object where _id equals data.id
+      }else{
+        var currentObject = {};
+        currentObject.name = "None";
+      }
 
       if(alarm.active === "true") {
         if( (alarmDays.indexOf(currentDay.toString()) > -1) && (currentHour == alarmHour) && (currentMinute == alarmMinute) ) {
