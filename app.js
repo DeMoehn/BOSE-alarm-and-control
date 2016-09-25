@@ -241,25 +241,71 @@ function sendToBose(obj, data) {
 
 // - Watch and recieve devices -
 // -- Watch all http servers --
-function requestDevices() {
-  needle.get('http://localhost:3333/api/systems', function(err, resp) {
-    if (!err) {
-      if(resp.body.data[0].name == "none" && deviceRequests < 10) {
-        console.log("I only find 'None' device, I'll try harder...");
-        deviceRequests++;
-        setTimeout(requestDevices, 500);
-      }else{
-        myBoseDevices = resp.body.data
-        console.log(myBoseDevices);
-      }
-    }else{ // API couldn't be called
-      console.log("Problem requesting Bose device from wecker.js via API");
-      setTimeout(requestDevices, 500);
+// function requestDevices() {
+//   needle.get('http://localhost:3333/api/systems', function(err, resp) {
+//     if (!err) {
+//       if(resp.body.data[0].name == "none" && deviceRequests < 10) {
+//         console.log("I only find 'None' device, I'll try harder...");
+//         deviceRequests++;
+//         setTimeout(requestDevices, 500);
+//       }else{
+//         myBoseDevices = resp.body.data
+//         console.log(myBoseDevices);
+//       }
+//     }else{ // API couldn't be called
+//       console.log("Problem requesting Bose device from wecker.js via API");
+//       setTimeout(requestDevices, 500);
+//     }
+//   });
+// }
+// var deviceRequests = 0;
+// requestDevices();
+// -- Watch all http servers --
+var sequence = [
+    mdns.rst.DNSServiceResolve(),
+    'DNSServiceGetAddrInfo' in mdns.dns_sd ? mdns.rst.DNSServiceGetAddrInfo() : mdns.rst.getaddrinfo({families:[0]}),
+    mdns.rst.makeAddressesUnique()
+];
+var browser = mdns.createBrowser(mdns.tcp('soundtouch'), {resolverSequence: sequence});
+
+// -- Read broadcasting devices and save them --
+browser.on('serviceUp', function(service) {
+  var newDevice = {};
+  newDevice.name = service.name;
+  newDevice.ip = service.addresses[0]
+  newDevice.cmdPort = service.port; // Command Port
+  newDevice.wsPort = '8080'; // WebSocket Port
+  newDevice.MAC = service.txtRecord.MAC;
+
+  var sendUrl = 'http://'+newDevice.ip+":"+newDevice.cmdPort+'/info';
+  needle.get(sendUrl, function(error, response) {
+    if (!error && response.statusCode == 200) {
+      newDevice.type = response.body.info.type;
+      newDevice.Account = response.body.info.margeAccountUUID;
+
+      needle.get('http://'+newDevice.ip+":"+newDevice.cmdPort+'/now_playing', function(error, response) {
+        if (!error && response.statusCode == 200) {
+          newDevice.power = response.body.nowPlaying.$.source;
+          myBoseDevices.push(newDevice);
+          console.log("Found service: "+service.name+" ("+newDevice.power+") - IP: "+service.addresses[0]+":"+service.port+" - MAC: "+service.txtRecord.MAC);
+          boseSystemsLoaded = true;
+        }else{
+          console.log("Error getting additional info");
+        }
+      });
+    }else{
+      console.log("Error asking: "+newDevice.name+" for information. No device saved!");
     }
   });
-}
-var deviceRequests = 0;
-requestDevices();
+});
+
+// -- Listen to devices that go down --
+browser.on('serviceDown', function(service) {
+  console.log(service);
+  // TODO: Remove device from myBoseDevices
+});
+browser.start();
+
 
 // - Send Key -
 function boseKey(data) {
