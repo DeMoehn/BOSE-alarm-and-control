@@ -439,13 +439,13 @@ function checkTime() {
       if(alarm.active === "true") {
         if( (alarmDays.indexOf(currentDay.toString()) > -1) && (currentHour == alarmHour) && (currentMinute == alarmMinute) ) {
           console.log("ALARM! Alarm: \""+alarm.name+"\" is met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute+" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - V: "+alarm.volume+" - D: "+currentObject.name+")");
-          if(alarm.preset == 7) {
-            startBose("POWER", currentObject);
-          }else{
+          if(alarm.preset == 7) { // Preset 7 is for powering the device off
+            stopBose(currentObject);
+          }else{ // Otherwise use normal presets
             startBose("PRESET_"+alarm.preset, currentObject);
+            boseVolume(parseInt(alarm.volume), currentObject);
+            startBose("SHUFFLE_ON", currentObject);
           }
-          boseVolume(parseInt(alarm.volume), currentObject);
-          startBose("SHUFFLE_ON", currentObject);
         }else{
           if(alarmDays.indexOf(currentDay.toString()) > -1) {
             console.log("Alarm: \""+alarm.name+"\" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - V: "+alarm.volume+" - D: "+currentObject.name+") is running. Day met! Time not! - Current time: "+currentHour+":"+currentMinute);
@@ -512,6 +512,24 @@ function startBose(key, alarm) {
   var cmdR = '<key state="release" sender="Gabbo">'+key+'</key>';
   execCMD(cmdP, url, "key");
   execCMD(cmdR, url, "key");
+}
+
+// - Check if device is turned off, and stop it -
+function stopBose(alarm) {
+  var url = alarm.ip+':'+alarm.cmdPort;
+  needle.get('http://'+url+'/now_playing', function(error, response) {
+    if (!error && response.statusCode == 200) {
+      var devicePower = response.body.nowPlaying.$.source;
+      console.log("Asked device: "+alarm.name+" ("+devicePower+")");
+      if(devicePower !== "STANDBY") {
+        startBose("POWER", alarm);
+      }else{
+        console.log("Device is already turned off! Alarm took no effect!")
+      }
+    }else{
+      console.log("Error getting additional info");
+    }
+  });
 }
 
 function boseVolume(vol, alarm) {

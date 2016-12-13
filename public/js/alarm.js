@@ -160,7 +160,7 @@ $(document).ready(function() { // Start when document is ready
           alarmSample.find('.alarmDevice').html("Not found");
         }
         if(alarm.preset == 7) {
-          alarmSample.find('.alarmPV').html("(Preset: on/off, Volume: "+alarm.volume+")");
+          alarmSample.find('.alarmPV').html("(Preset: power off)");
         }else{
           alarmSample.find('.alarmPV').html("(Preset: "+alarm.preset+", Volume: "+alarm.volume+")");
         }
