@@ -439,7 +439,11 @@ function checkTime() {
       if(alarm.active === "true") {
         if( (alarmDays.indexOf(currentDay.toString()) > -1) && (currentHour == alarmHour) && (currentMinute == alarmMinute) ) {
           console.log("ALARM! Alarm: \""+alarm.name+"\" is met! Alarm time: "+alarm.time+" - Current time: "+currentHour+":"+currentMinute+" (T: "+alarm.time+" - D: "+alarm.days.join(", ")+" - P: "+alarm.preset+" - A: "+alarm.active+" - V: "+alarm.volume+" - D: "+currentObject.name+")");
-          startBose("PRESET_"+alarm.preset, currentObject);
+          if(alarm.preset == 7) {
+            startBose("POWER", currentObject);
+          }else{
+            startBose("PRESET_"+alarm.preset, currentObject);
+          }
           boseVolume(parseInt(alarm.volume), currentObject);
           startBose("SHUFFLE_ON", currentObject);
         }else{

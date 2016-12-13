@@ -1,239 +1,232 @@
 // jshint esversion: 6
-// ---------------------------------
+// Created by: Sebastian Moehn
+// Date: October, 2016
+
+
+// -----------------------------
 // - Require & Variables Setup -
-// --------------------------------
+// -----------------------------
 
-// - Config File -
-var config = require('./config');
+  // - Config File(s) -
+  var config = require('./config'); // Includes DB Info, etc.
 
-// - Webserver & Socket IO -
-var express = require('express'); // Web - Framework
-var doT = require('express-dot'); // Templating
-var compression = require('compression'); // gzip/deflate outgoing responses
-var app = express();
-var server = require('http').Server(app); // Http Server
-var io = require('socket.io')(server); // IO Socket
-var needle = require('needle'); // HTTP Handler
-var parseString = require('xml2js').parseString; // Used to transform XML to JSON
-var WebSocket = require('ws'); // To use WebSockets
-var mdns = require('mdns'); // MDNS Tool to discover devices
+  // - Include Packages -
+  var express = require('express'); // Web - Framework
+  var doT = require('express-dot'); // Templating Engine
+  var compression = require('compression'); // Gzip/deflate outgoing responses
+  var app = express(); // Create an app based on Express
+  var server = require('http').Server(app); // HTTP Server, based on the Express app
+  var io = require('socket.io')(server); // IO Socket, based on the Server
+  var needle = require('needle'); // HTTP Requests Handler
+  var parseString = require('xml2js').parseString; // Used to transform XML to JSON
+  var WebSocket = require('ws'); // WebSocket Framework (listen to BOSE device changes)
+  var mdns = require('mdns'); // MDNS Tool to discover devices
 
-// discover all available service types
-var all_the_types = mdns.browseThemAll(); // all_the_types is just another browser...
+  // - Database Setup -
+  var dbUrl = config.couchDB.protocol+config.couchDB.ip+":"+config.couchDB.port; // Database URL (from Config File)
+  var nano = require('nano')(dbUrl); // Connect to CouchDB using nano
+  var db = nano.use(config.couchDB.db_automation); // Connect to Database
 
-// - Shell Scripts -
-var path = require('path');
-var sys = require('sys');
-var exec = require('child_process').exec;
+  // - Define Variables -
 
-// - Database -
-var nano = require('nano')(config.couchDB.protocol+config.couchDB.ip+":"+config.couchDB.port); // Connect to CouchDB on the PI
-var db = nano.use('homeautomation'); // Connect to Database
+    // -- Device commands --
+    var cmd = 'pilight-send -p'; //Command to send with "pilight" and -p for Protocol (Rest comes from DB)
 
-// - Define Variables -
-var cmd = 'pilight-send -p'; //Command to send with "pilight" and -p for Protocol (Rest comes from DB)
-var files = __dirname + '/public/';
+    // -- Available Categories and Objects --
+    var myGroups = Array();
+    var myObjects = Array();
+    var objectsScanned = false;
 
-// Available Buttons
-var myGroups = Array();
-var myObjects = Array();
-var objectsScanned = false;
+    // -- Available Devices and Alarms --
+    var myBoseDevices = Array();
+    var activeBoseSystem = {name: "none"};
+    var alarmsArr = Array(); // Save all Alarms
 
-// Other Variables
-var myBoseDevices = Array();
-var activeBoseSystem = {name: "none"};
-var url = "192.168.0.135"; // TODO: change static url to dynamic activeBoseSystem
-var alarmsArr = Array(); // Save all Alarms
+    // -- Other variables --
+    var weekday = new Array("So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"); // Array holding all days
 
-// ------------------
+
+// ----------------
 // - Server Setup -
-// ------------------
+// ----------------
 
-// - Listen for paths -
-app.set('views', __dirname+'/views');
-app.set('view engine', 'dot'); // Use dot Templating
-app.engine('dot', doT.__express); // Use dot Templating
-app.use(compression()); // Use compression
-app.use(express.static(__dirname + '/public')); // Use Express.static middleware to servce static files
+  // - Listen for paths -
+  app.set('views', __dirname+'/views'); // Template files are stored here
+  app.set('view engine', 'dot'); // Use dot Templating
+  app.engine('dot', doT.__express); // Use dot Engine based on Express
+  app.use(compression()); // Use file compression
+  app.use(express.static(__dirname + '/public')); // All Public files are stored here
 
-// - Routes -
-app.get('/', homeRoute);
-app.get('/home', homeRoute);
-app.get('/manage', manageRoute);
-app.get('/info', infoRoute);
-app.get('/bose', boseRoute);
-app.get('/alarm', alarmRoute);
+  // - Routes -
+  app.get('/', homeRoute); // Standard route (usually redirects to subroute)
+  app.get('/home', homeRoute); // Shows all categories and objects
+  app.get('/manage', manageRoute); // Manage categories and objects
+  app.get('/bose', boseRoute); // Control BOSE devices
+  app.get('/alarm', alarmRoute); // Manage alarms for BOSE devices
+  app.get('/info', infoRoute); // Show generall app information
 
-// - Home route -
-function homeRoute(req, res) {
-  res.redirect('/bose');
-  // myGroups = []; // Reset variables if loaded again
-  // myObjects = [];
-  // objectsScanned = false;
-  //
-  // db.view('show', 'groups', function(err, groupBody) { // Read all Groups
-  //   if (!err) {
-  //     db.view('show', 'btns', function(err, objectBody) { // Read all Objects
-  //       if (!err) {
-  //         groupBody.rows.forEach(function(groupDoc) { // For each Group
-  //           groupDoc.devices = Array(); // Store all objects here
-  //           objectBody.rows.forEach(function(objectDoc) { // For each Object
-  //             if(objectDoc.value.groupid == groupDoc.id) { // Does this object belong to the group?
-  //               groupDoc.devices.push(objectDoc);
-  //             }
-  //             if(!objectsScanned) {
-  //               myObjects.push(objectDoc.value);
-  //             }
-  //           });
-  //           myGroups.push(groupDoc); // Save the group to an array
-  //           objectsScanned = true; // Only save the objects once (not for every group)
-  //         });
-  //
-  //         res.render('index', {items: myGroups}); // Render and pass variables
-  //       }
-  //     });
-  //   }
-  // });
-}
+  // - Route Functions -
 
-// - Manage route -
-function manageRoute(req, res) {
-  db.view('show', 'groups', function(err, body) {
-    if (!err) {
-      items = body.rows;
-      res.render('manage', {items: items}); // Render and pass variables
+    // -- Home route --
+    function homeRoute(req, res) {
+      res.redirect('/bose'); // Redirect to BOSE route
+      // myGroups = []; // Reset variables if loaded again
+      // myObjects = [];
+      // objectsScanned = false;
+      //
+      // db.view('show', 'groups', function(err, groupBody) { // Read all Groups
+      //   if (!err) {
+      //     db.view('show', 'btns', function(err, objectBody) { // Read all Objects
+      //       if (!err) {
+      //         groupBody.rows.forEach(function(groupDoc) { // For each Group
+      //           groupDoc.devices = Array(); // Store all objects here
+      //           objectBody.rows.forEach(function(objectDoc) { // For each Object
+      //             if(objectDoc.value.groupid == groupDoc.id) { // Does this object belong to the group?
+      //               groupDoc.devices.push(objectDoc);
+      //             }
+      //             if(!objectsScanned) {
+      //               myObjects.push(objectDoc.value);
+      //             }
+      //           });
+      //           myGroups.push(groupDoc); // Save the group to an array
+      //           objectsScanned = true; // Only save the objects once (not for every group)
+      //         });
+      //
+      //         res.render('index', {items: myGroups}); // Render and pass variables
+      //       }
+      //     });
+      //   }
+      // });
     }
+
+    // -- Manage route --
+    function manageRoute(req, res) {
+      db.view('show', 'groups', function(err, body) { // Load all avilable groups
+        if (!err) { // If there's no error
+          items = body.rows;
+          res.render('manage', {items: items}); // Render the manage template and pass the groups
+        }
+      });
+    }
+
+    // -- Bose Music route --
+    function boseRoute(req, res) {
+      res.render('bose', {items: myBoseDevices}); // Render the bose template with info about all devices
+    }
+
+    // -- Alarm Route --
+    function alarmRoute(req, res) {
+      loadAlarms(); // Load all alarms
+      res.render('alarm', ""); // Render the alarms template
+    };
+
+    // -- Info route --
+    function infoRoute(req, res) {
+          res.render('info', {}); // Just render the template
+    }
+
+  // - Start Server -
+  server.listen(3000, function() { // Create Server on port 3000
+    console.log('listening on http://localhost:3000');
   });
-}
-
-// - Info route -
-function infoRoute(req, res) {
-      res.render('info', {}); // Render and pass variables
-}
-
-// - Bose Music route -
-function boseRoute(req, res) {
-  res.render('bose', {items: myBoseDevices}); // Render and pass variables
-}
-
-// - Alarm Route -
-function alarmRoute(req, res) {
-  loadAlarms();
-  res.render('alarm', ""); // Render and pass variables
-};
-
-// - Start Server -
-server.listen(3000, function() { // Create Server on 3000
-  console.log('listening on http://localhost:3000');
-});
-// - Advertise a http server on port 3000 (via MDNS)-
-var ad = mdns.createAdvertisement(mdns.tcp('http'), 4321);
-ad.start();
 
 
-// ------------------------
+// ---------------------
 // - General Functions -
-// -----------------------
+// ---------------------
 
-// - Helpers for the routes -
-function loadAlarms() {
-  var sendUrl = "http://localhost:3333/api/timer";
-  needle.get(sendUrl, function(error, response) {
-    if (!error && response.statusCode == 200) {
-      if(!response.body.hasOwnProperty('error')) {
-        alarmsArr = []; // Empty Alarms array
-        response.body.alarms.forEach(function(alarm) { // For each Group
-          var myAlarm = {}; // Current alarm we are editing
-          myAlarm = alarm;
-          // Normalize the Alarm time, as the other script works with single values without "0" infront
-          var myAlarmTime = alarm.time.split(":");
-          if(myAlarmTime[0].length == 1) {
-            myAlarmTime[0] = "0"+myAlarmTime[0];
-          }
-          if(myAlarmTime[1].length == 1) {
-            myAlarmTime[1] = "0"+myAlarmTime[1];
-          }
-          myAlarm.time = myAlarmTime[0]+":"+myAlarmTime[1];
+  // - Helpers for the routes -
+  function loadAlarms() {
+    var sendUrl = "http://localhost:3333/api/timer"; // URL to communicate with the timer API
 
-          // Normalize days, as the other script needs integers and we want actual days
-          myAlarm.days = alarm.days;
-          var weekday = new Array(7);
-          weekday[0]=  "So";
-          weekday[1] = "Mo";
-          weekday[2] = "Di";
-          weekday[3] = "Mi";
-          weekday[4] = "Do";
-          weekday[5] = "Fr";
-          weekday[6] = "Sa";
-          var newDays = Array();
-          myAlarm.days.forEach(function(day) { // For each Group
-            var newDay = weekday[day];
-            newDays.push(newDay);
+    needle.get(sendUrl, function(error, response) {
+      if (!error && response.statusCode == 200) {
+        if(!response.body.hasOwnProperty('error')) { // If response was recieved and is not an error
+          alarmsArr = []; // Empty the Alarms array
+          response.body.alarms.forEach(function(alarm) { // Do for each alarm recieved
+            var myAlarm = {}; // Create a new alarm object
+            myAlarm = alarm; // Copy the object from the DB to the alarm object
+            myAlarm.time = transformTime(alarm.time.split(":"), "add"); // Normalize the Alarm time, as the backend script works without "0" infront
+            myAlarm.days = transformDays(alarm.days); // Normalize days, as backend script needs integers and we want actual days
+            alarmsArr.push(myAlarm); // Add alarm to the Array
           });
-          myAlarm.days = newDays;
-          myAlarm.preset = alarm.preset;
-          myAlarm.volume = alarm.volume;
-          alarmsArr.push(myAlarm);
-        });
-        io.sockets.emit('getAlarmsStatus', alarmsArr); // Respond with JSON Object of btnData
+          io.sockets.emit('getAlarmsStatus', alarmsArr); // Respond with JSON Object holding all the alarms
+        }else{
+          io.sockets.emit('getAlarmsStatus', {error: true, desc: "Could not load alarms from server"}); // Respond with JSON Error
+        }
       }else{
-        io.sockets.emit('getAlarmsStatus', {error: true, desc: "Could not load data from server"}); // Respond with JSON Object of btnData
+        console.log(error);
+        io.sockets.emit('getAlarmsStatus', {error: true, desc: "Could talk to server (asking for alarms)"}); // Respond with JSON Error
       }
-    }else{
-      console.log(error);
-    }
-  });
-}
-
-// - Send to Intertechno Device -
-function sendToDev(obj, data) {
-  var devcmd = obj.code;
-  var stat = data.status;
-
-  var send = "";
-
-  send =  cmd+" "+devcmd;
-  if(stat == 1) {
-    send =  send + " -t";
-  }else{
-    send =  send + " -f";
+    });
   }
 
-  console.log('Device - Command: '+send);
+  // - Send a command to Intertechno Device -
+  function sendToDev(obj, data) {
+    var devcmd = obj.code;
+    var stat = data.status;
+    var send = "";
 
-  exec(send+" && "+send+" && "+send, function (err, stdout, stderr) { // e.g. pilight-send -p kaku_switch -i 4762303 -u 0 -t
-    if (err) {
-      console.log('exec error: ' + err);
+    send = cmd+" "+devcmd;
+    if(stat == 1) {
+      send =  send + " -t";
     }else{
-      console.log(stdout);
-      obj.status = stat;
-      io.sockets.emit('btnActionPressedStatus', obj); // Respond with JSON Object of btnData
+      send =  send + " -f";
     }
-  });
-}
 
-function sendToBose(obj, data) {
-  var devcmd = 'curl -X POST '+obj.code+"/key -d '<key state=\"press\" sender=\"Gabbo\">POWER</key>'";
-  var stat = data.status;
+    console.log('Device - Command: '+send); // TODO: Exec won't work anymore, use something else?
+    exec(send+" && "+send+" && "+send, function (err, stdout, stderr) { // e.g. pilight-send -p kaku_switch -i 4762303 -u 0 -t
+      if (err) {
+        console.log('exec error: ' + err);
+      }else{
+        console.log(stdout);
+        obj.status = stat;
+        io.sockets.emit('btnActionPressedStatus', obj); // Respond with JSON Object of btnData
+      }
+    });
+  }
 
-  console.log('Device - Command: '+send);
-  exec(devcmd, function (err, stdout, stderr) { // Exceute command
-    if (err) {
-      console.log('exec error: ' + err);
-    }else{
-      console.log(stdout);
-    }
-  });
+  // - Send a command to BOSE Device -
+  function sendToBose(obj, data) {
+    var devcmd = 'curl -X POST '+obj.code+"/key -d '<key state=\"press\" sender=\"Gabbo\">POWER</key>'"; // Command string (See BOSE documentation)
+    var stat = data.status;
 
-  obj.status = stat;
-  io.sockets.emit('btnActionPressedStatus', obj); // Respond with JSON Object of btnData
-}
+    console.log('Device - Command: '+send);
+    exec(devcmd, function (err, stdout, stderr) { // Exceute command
+      if (err) {
+        console.log('exec error: ' + err);
+      }else{
+        console.log(stdout);
+      }
+    });
+
+    obj.status = stat;
+    io.sockets.emit('btnActionPressedStatus', obj); // Respond with JSON Object containing the object
+  }
 
 // -----------------------
 // - Helper Functions -
 // -----------------------
 
-// more to come
+  // - Either adds or removes leading 0s -
+  function transformTime(myTime) { // Expects Array with two Strings "XX":"xx"
+    if(myTime[0].length == 1) {
+      myTime[0] = "0"+myTime[0];
+    }
+    if(myTime[1].length == 1) {
+      myTime[1] = "0"+myTime[1];
+    }
+    return myTime[0]+":"+myTime[1];
+  }
+
+  // - Transforms numbers to days -
+  function transformDays(myDays) { // Expects values from 0-6 (So-Sa)
+    var newDays = Array(); // Create new array
+    myDays.forEach(function(day) { // For each day
+      newDays.push(weekday[day]); // Add correct Name to Array
+    });
+    return newDays;
+  }
 
 // ----------------------------
 // - BOSE Music Functions -

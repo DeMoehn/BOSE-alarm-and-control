@@ -2,6 +2,7 @@
 	"couchDB": {
 		"protocol": "http://",
 		"ip": "127.0.0.1",
-		"port": "5984"
+		"port": "5984",
+		"db_automation": "homeautomation"
 	}
 }

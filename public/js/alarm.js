@@ -159,7 +159,11 @@ $(document).ready(function() { // Start when document is ready
         }else{
           alarmSample.find('.alarmDevice').html("Not found");
         }
-        alarmSample.find('.alarmPV').html("(Preset: "+alarm.preset+", Volume: "+alarm.volume+")");
+        if(alarm.preset == 7) {
+          alarmSample.find('.alarmPV').html("(Preset: on/off, Volume: "+alarm.volume+")");
+        }else{
+          alarmSample.find('.alarmPV').html("(Preset: "+alarm.preset+", Volume: "+alarm.volume+")");
+        }
         alarmSample.find('.switch-input').attr('id', alarm._id);
         alarmSample.find('.switch-input').attr('data-rev', alarm._rev);
         alarmSample.find('.editbtn').attr('data-id', alarm._id);

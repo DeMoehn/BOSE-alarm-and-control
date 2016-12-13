@@ -77,3 +77,7 @@ Some private work to create a web-app that can communicate with 433 MHz devices 
 - Use `crontab -e`
 - Now add the lines `@reboot /home/pi/app-starter.sh &` and `@reboot /home/pi/alarm-starter.sh &`
 - Now reboot your Raspberry Pi and see if everything works (use: `sudo reboot -n`)
+
+## How to use it
+- Now use the IP of your Raspberry Pi and Port 3000 to visit the website
+- http://<RaPi-IP>:3000
